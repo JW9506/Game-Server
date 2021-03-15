@@ -4,6 +4,8 @@
 
 #define RECV_LEN 4096
 
+enum { TCP_SOCKET, WS_SOCKET };
+
 class uv_session : session {
   public:
     uv_tcp_t tcp_handle;
@@ -21,6 +23,7 @@ class uv_session : session {
   public:
     char recv_buf[RECV_LEN];
     int recved;
+    int socket_type;
 
   public:
     static uv_session* create();
