@@ -37,7 +37,7 @@ static void on_connection(uv_stream_t* server, int status) {
     uv_tcp_getpeername((const uv_tcp_t*)client, (sockaddr*)&addr, &len);
     uv_ip4_name(&addr, s->c_address, sizeof(s->c_address));
     s->c_port = ntohs(addr.sin_port);
-    s->socket_type = (int)server->data;
+    s->socket_type = (int)((size_t)server->data);
     printf("New client: %s:%d\n", s->c_address, s->c_port);
 
     uv_read_start((uv_stream_t*)client, alloc_buf, after_read);
