@@ -189,6 +189,7 @@ void netbus::start_ws_server(int port) {
         free(listen);
         return;
     }
+    init_session_allocer();
     printf("Listening ws://%s:%d\n", host, port);
     uv_listen((uv_stream_t*)listen, SOMAXCONN, on_connection);
     listen->data = (void*)WS_SOCKET;

@@ -5,9 +5,11 @@
 #include <http_parser.h>
 #include "sha1.h"
 #include "session.h"
+#include "cache_alloc.h"
 #include "base64_encoder.h"
 
 #define SHA1_DIGEST_SIZE 64
+extern struct cache_allocer* wbuf_allocator;
 
 #ifdef __cplusplus
 extern "C" {
@@ -130,8 +132,9 @@ unsigned char* ws_protocol::package_ws_send_data(const unsigned char* raw_data,
         head_size += 8;
         return NULL;
     }
-    // cache malloc
-    unsigned char* data_buf = (unsigned char*)malloc(head_size + len);
+
+    unsigned char* data_buf =
+        (unsigned char*)cache_alloc(wbuf_allocator, head_size + len);
     data_buf[0] = 0x81;
     if (len <= 125) {
         data_buf[1] = (char)len;
@@ -146,6 +149,5 @@ unsigned char* ws_protocol::package_ws_send_data(const unsigned char* raw_data,
 }
 
 void ws_protocol::free_ws_send_pkg_data(unsigned char* ws_pkg) {
-    // cache free
-    free(ws_pkg);
+    cache_free(wbuf_allocator, ws_pkg);
 }

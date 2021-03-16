@@ -16,7 +16,7 @@ endif()
 include_directories(netbus/include)
 include_directories(utils/include)
 
-file(GLOB_RECURSE utils "./utils/*.cc")
+file(GLOB_RECURSE utils "./utils/*.cc" "./utils/*.c")
 file(GLOB_RECURSE netbus "./netbus/*.cc")
 add_executable(main main.cc ${utils})
 add_executable(test apps/test/main.cc ${netbus} ${utils})

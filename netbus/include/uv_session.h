@@ -6,6 +6,8 @@
 
 enum { TCP_SOCKET, WS_SOCKET };
 
+void init_session_allocer();
+
 class uv_session : session {
   public:
     uv_tcp_t tcp_handle;
@@ -13,8 +15,6 @@ class uv_session : session {
     int c_port;
 
     uv_shutdown_t shutdown;
-    uv_write_t w_req;
-    uv_buf_t w_buf;
 
   public:
     int did_shake_hand;
