@@ -4,6 +4,7 @@
 #include "netbus.h"
 #include "uv_session.h"
 #include "ws_protocol.h"
+#include "tp_protocol.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -13,6 +14,34 @@ static void on_recv_client_cmd(uv_session* s, unsigned char* body, int len) {
     printf(">> client command: %.*s\n", len, body);
     char* msg = "ok !";
     s->send_data(msg, (int)strlen(msg));
+}
+
+static void on_recv_tcp_data(uv_session* s) {
+    unsigned char* pkg_data =
+        (unsigned char*)(s->long_pkg != NULL ? s->long_pkg : s->recv_buf);
+    while (s->recved > 0) {
+        int pkg_size = 0;
+        int head_size = 0;
+
+        if (!tp_protocol::read_header(pkg_data, s->recved, &pkg_size,
+                                      &head_size)) {
+            break;
+        }
+        if (s->recved < pkg_size) { break; }
+        unsigned char* raw_data = pkg_data + head_size;
+
+        on_recv_client_cmd(s, raw_data, pkg_size - head_size);
+        if (s->recved > pkg_size) {
+            // remove handled pkg (by moving it to the lower mem space)
+            memmove(pkg_data, pkg_data + pkg_size, s->recved - pkg_size);
+        }
+        s->recved -= pkg_size;
+        if (s->recved == 0 && s->long_pkg != NULL) {
+            free(s->long_pkg);
+            s->long_pkg = NULL;
+            s->long_pkg_size = 0;
+        }
+    }
 }
 
 static void on_recv_ws_data(uv_session* s) {
@@ -97,10 +126,7 @@ static void after_read(uv_stream_t* stream, ssize_t nread,
             on_recv_ws_data(s);
         }
     } else {
-        buf->base[nread] = 0;
-        printf("recv %d\n", (int)nread);
-        printf("%s\n", buf->base);
-        s->send_data("hello", (int)strlen("hello"));
+        on_recv_tcp_data(s);
     }
 }
 static void on_connection(uv_stream_t* server, int status) {
