@@ -1,5 +1,7 @@
 [requires]
 libuv/1.38.1
+http_parser/2.9.4
+cryptopp/8.4.0
 
 [generators]
 cmake

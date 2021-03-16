@@ -16,6 +16,9 @@ class uv_session : session {
     uv_write_t w_req;
     uv_buf_t w_buf;
 
+  public:
+    int did_shake_hand;
+
   private:
     void init();
     void exit();
@@ -24,6 +27,8 @@ class uv_session : session {
     char recv_buf[RECV_LEN];
     int recved;
     int socket_type;
+    char* long_pkg;
+    int long_pkg_size;
 
   public:
     static uv_session* create();
@@ -31,6 +36,6 @@ class uv_session : session {
 
   public:
     virtual void close();
-    virtual void send_data(char* body, size_t len);
+    virtual void send_data(char* body, int len);
     virtual const char* get_address(int* port);
 };

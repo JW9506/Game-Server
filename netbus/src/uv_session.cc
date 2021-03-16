@@ -1,6 +1,7 @@
 #include "uv_session.h"
+#include "ws_protocol.h"
 
-#ifdef __cpluslus
+#ifdef __cplusplus
 extern "C" {
 #endif
 static void write_cb(uv_write_t* req, int status) {
@@ -14,7 +15,7 @@ static void close_cb(uv_handle_t* handle) {
 static void shutdown_cb(uv_shutdown_t* req, int status) {
     uv_close((uv_handle_t*)req->handle, close_cb);
 }
-#ifdef __cpluslus
+#ifdef __cplusplus
 }
 #endif
 
@@ -37,6 +38,9 @@ void uv_session::init() {
     memset(&this->tcp_handle, 0, sizeof(this->tcp_handle));
     this->c_port = 0;
     this->recved = 0;
+    this->did_shake_hand = 0;
+    this->long_pkg = NULL;
+    this->long_pkg_size = 0;
 }
 
 void uv_session::exit() { }
@@ -48,11 +52,21 @@ void uv_session::close() {
     return;
 }
 
-void uv_session::send_data(char* body, size_t len) {
+void uv_session::send_data(char* body, int len) {
     auto w_req{ &this->w_req };
     auto w_buf{ &this->w_buf };
-    *w_buf = uv_buf_init(body, (uint32_t)len);
-    uv_write(w_req, (uv_stream_t*)&this->tcp_handle, w_buf, 1, write_cb);
+    if (this->socket_type == WS_SOCKET && this->did_shake_hand) {
+        int ws_pkg_len;
+        unsigned char* ws_pkg = ws_protocol::package_ws_send_data(
+            (unsigned char*)body, (int)len, &ws_pkg_len);
+        *w_buf = uv_buf_init((char*)ws_pkg, (uint32_t)ws_pkg_len);
+        uv_write(w_req, (uv_stream_t*)&this->tcp_handle, w_buf, 1, write_cb);
+        /* async problem? */
+        ws_protocol::free_ws_send_pkg_data(ws_pkg);
+    } else {
+        *w_buf = uv_buf_init(body, (uint32_t)len);
+        uv_write(w_req, (uv_stream_t*)&this->tcp_handle, w_buf, 1, write_cb);
+    }
 }
 
 const char* uv_session::get_address(int* port) {

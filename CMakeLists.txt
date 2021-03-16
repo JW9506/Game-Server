@@ -14,11 +14,12 @@ if (WIN32)
 endif()
 
 include_directories(netbus/include)
+include_directories(utils/include)
 
-file(GLOB_RECURSE files "./utils/*.cc" "./netbus/*.cc")
+file(GLOB_RECURSE utils "./utils/*.cc")
 file(GLOB_RECURSE netbus "./netbus/*.cc")
-add_executable(main main.c ${files})
-add_executable(test apps/test/main.cc ${netbus})
+add_executable(main main.cc ${utils})
+add_executable(test apps/test/main.cc ${netbus} ${utils})
 
 target_link_libraries(main ${CONAN_LIBS})
 target_link_libraries(test ${CONAN_LIBS})

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>Document</title>
+  <style>
+    body {
+      background-color: #000;
+    }
+  </style>
+</head>
+
+<body>
+  <script>
+    const ws = new WebSocket('ws://127.0.0.1:8001/ws');
+    ws.onopen = () => {
+      console.log('open')
+      ws.send("Hello server");
+    }
+
+    ws.onmessage = (ev) => {
+      console.log(ev.data)
+    }
+
+    ws.onclose = () => {
+      console.log('close')
+    }
+
+    ws.onerror = (ev) => {
+      console.log(ev, 'error')
+    }
+
+  </script>
+</body>
+
+</html>
