@@ -5,16 +5,24 @@
 #include "uv_session.h"
 #include "ws_protocol.h"
 #include "tp_protocol.h"
+#include "proto_man.h"
 
 #ifdef __cplusplus
 extern "C" {
-#endif
-
 static void on_recv_client_cmd(uv_session* s, unsigned char* body, int len) {
-    printf(">> client command: %.*s\n", len, body);
-    char* msg = "ok !";
-    s->send_data(msg, (int)strlen(msg));
+    struct cmd_msg* msg = NULL;
+    if (proto_man::decode_cmd_msg(body, len, &msg)) {
+        int out_len;
+        unsigned char* encoded_pkg =
+            proto_man::encode_msg_to_raw(msg, &out_len);
+        if (encoded_pkg) {
+            s->send_data(encoded_pkg, out_len);
+            proto_man::msg_raw_free(encoded_pkg);
+        }
+        proto_man::cmd_msg_free(msg);
+    }
 }
+#endif
 
 static void on_recv_tcp_data(uv_session* s) {
     unsigned char* pkg_data =

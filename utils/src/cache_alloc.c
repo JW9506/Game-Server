@@ -28,7 +28,7 @@ void destroy_cache_allocer(struct cache_allocer* allocer) {
 }
 
 void* cache_alloc(struct cache_allocer* allocer, int elem_size) {
-    if (allocer->elem_size < elem_size) {
+    if (!allocer || allocer->elem_size < elem_size) {
         return malloc(elem_size);
     }
     if (allocer->free_list != NULL) {
@@ -40,7 +40,7 @@ void* cache_alloc(struct cache_allocer* allocer, int elem_size) {
 }
 
 void cache_free(struct cache_allocer* allocer, void* mem) {
-    if ((unsigned char*)mem >= allocer->cache_mem &&
+    if (allocer && (unsigned char*)mem >= allocer->cache_mem &&
         (unsigned char*)mem <
             allocer->cache_mem + allocer->capacity * allocer->elem_size) {
         struct node* node = mem;

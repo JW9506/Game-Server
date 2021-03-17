@@ -36,6 +36,6 @@ class uv_session : session {
 
   public:
     virtual void close();
-    virtual void send_data(char* body, int len);
+    virtual void send_data(unsigned char* body, int len);
     virtual const char* get_address(int* port);
 };

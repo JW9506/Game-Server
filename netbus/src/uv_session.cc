@@ -79,7 +79,7 @@ void uv_session::close() {
     return;
 }
 
-void uv_session::send_data(char* body, int len) {
+void uv_session::send_data(unsigned char* body, int len) {
     uv_write_t* w_req =
         (uv_write_t*)cache_alloc(wr_allocator, sizeof(uv_write_t));
     uv_buf_t w_buf;
@@ -94,7 +94,7 @@ void uv_session::send_data(char* body, int len) {
             /* async problem? */
             ws_protocol::free_ws_send_pkg_data(ws_pkg);
         } else {
-            w_buf = uv_buf_init(body, (uint32_t)len);
+            w_buf = uv_buf_init((char*)body, (uint32_t)len);
             uv_write(w_req, (uv_stream_t*)&this->tcp_handle, &w_buf, 1,
                      write_cb);
         }
