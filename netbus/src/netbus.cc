@@ -6,23 +6,20 @@
 #include "ws_protocol.h"
 #include "tp_protocol.h"
 #include "proto_man.h"
+#include "service_man.h"
 
 #ifdef __cplusplus
 extern "C" {
+#endif
 static void on_recv_client_cmd(uv_session* s, unsigned char* body, int len) {
     struct cmd_msg* msg = NULL;
     if (proto_man::decode_cmd_msg(body, len, &msg)) {
-        int out_len;
-        unsigned char* encoded_pkg =
-            proto_man::encode_msg_to_raw(msg, &out_len);
-        if (encoded_pkg) {
-            s->send_data(encoded_pkg, out_len);
-            proto_man::msg_raw_free(encoded_pkg);
+        if (!service_man::on_recv_cmd_msg((session*)s, msg)) {
+            s->close();
         }
         proto_man::cmd_msg_free(msg);
     }
 }
-#endif
 
 static void on_recv_tcp_data(uv_session* s) {
     unsigned char* pkg_data =
@@ -160,7 +157,10 @@ static void on_connection(uv_stream_t* server, int status) {
 
 static netbus* g_netbus;
 netbus* netbus::instance() {
-    if (!g_netbus) { g_netbus = new netbus; }
+    if (!g_netbus) {
+        g_netbus = new netbus;
+        g_netbus->init();
+    }
     return g_netbus;
 }
 
@@ -197,10 +197,14 @@ void netbus::start_ws_server(int port) {
         free(listen);
         return;
     }
-    init_session_allocer();
     printf("Listening ws://%s:%d\n", host, port);
     uv_listen((uv_stream_t*)listen, SOMAXCONN, on_connection);
     listen->data = (void*)WS_SOCKET;
 }
 
 void netbus::run() { uv_run(uv_default_loop(), UV_RUN_DEFAULT); }
+
+void netbus::init() {
+    service_man::init();
+    init_session_allocer();
+}

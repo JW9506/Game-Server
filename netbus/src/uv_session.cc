@@ -2,6 +2,8 @@
 #include "ws_protocol.h"
 #include "tp_protocol.h"
 #include "cache_alloc.h"
+#include "proto_man.h"
+#include "service_man.h"
 
 #define SESSION_CACHE_CAPACITY 6000
 #define WQ_CACHE_CAPACITY      4096
@@ -63,6 +65,7 @@ void uv_session::init() {
     memset(this->c_address, 0, sizeof(this->c_address));
     memset(this->recv_buf, 0, sizeof(this->recv_buf));
     memset(&this->tcp_handle, 0, sizeof(this->tcp_handle));
+    this->is_shutdown = 0;
     this->c_port = 0;
     this->recved = 0;
     this->did_shake_hand = 0;
@@ -73,10 +76,13 @@ void uv_session::init() {
 void uv_session::exit() { }
 
 void uv_session::close() {
+    if (this->is_shutdown) { return; }
+    // broadcast service client is disconnected
+    service_man::on_session_disconnect((session*)this);
+    this->is_shutdown = true;
     auto req{ &this->shutdown };
     memset(req, 0, sizeof(this->shutdown));
     uv_shutdown(req, (uv_stream_t*)&this->tcp_handle, shutdown_cb);
-    return;
 }
 
 void uv_session::send_data(unsigned char* body, int len) {
@@ -111,4 +117,14 @@ void uv_session::send_data(unsigned char* body, int len) {
 const char* uv_session::get_address(int* port) {
     if (port) { *port = this->c_port; }
     return this->c_address;
+}
+
+void uv_session::send_msg(struct cmd_msg* msg) {
+    int out_len;
+    unsigned char* encoded_pkg;
+    encoded_pkg = proto_man::encode_msg_to_raw(msg, &out_len);
+    if (encoded_pkg) {
+        this->send_data(encoded_pkg, out_len);
+        proto_man::msg_raw_free(encoded_pkg);
+    }
 }

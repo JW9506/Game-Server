@@ -4,6 +4,8 @@
 
 #define RECV_LEN 4096
 
+struct cmd_msg;
+
 enum { TCP_SOCKET, WS_SOCKET };
 
 void init_session_allocer();
@@ -25,6 +27,7 @@ class uv_session : session {
 
   public:
     char recv_buf[RECV_LEN];
+    bool is_shutdown;
     int recved;
     int socket_type;
     char* long_pkg;
@@ -38,4 +41,5 @@ class uv_session : session {
     virtual void close();
     virtual void send_data(unsigned char* body, int len);
     virtual const char* get_address(int* port);
+    virtual void send_msg(struct cmd_msg* msg);
 };
