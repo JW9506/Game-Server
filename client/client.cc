@@ -57,6 +57,10 @@ int main(int argc, char** argv) {
 
     static char recv_buf[256];
     int recv_len = recv(s, recv_buf, sizeof(recv_buf), 0);
+    if (!recv_len) {
+        printf("read nothing from server\n");
+        goto failed;
+    }
     int pkg_size, header_size;
     tp_protocol::read_header((unsigned char*)recv_buf, recv_len, &pkg_size,
                              &header_size);
