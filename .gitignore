@@ -5,3 +5,4 @@ proto/*.cc
 proto/*.h
 !proto/*map.h
 !proto/*map.cc
+logger
