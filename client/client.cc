@@ -36,11 +36,11 @@ int main(int argc, char** argv) {
 
     SOCKET s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (s == INVALID_SOCKET) { goto failed; }
-    SOCKADDR_IN sockaddr;
+    struct sockaddr_in sockaddr;
     sockaddr.sin_addr.S_un.S_addr = inet_addr("127.0.0.1");
     sockaddr.sin_family = AF_INET;
     sockaddr.sin_port = htons(port);
-    ret = connect(s, (SOCKADDR*)&sockaddr, sizeof(sockaddr));
+    ret = connect(s, (struct sockaddr*)&sockaddr, sizeof(sockaddr));
     if (ret != 0) { goto failed; }
     listen(s, 1);
 

@@ -14,9 +14,7 @@ extern "C" {
 static void on_recv_client_cmd(uv_session* s, unsigned char* body, int len) {
     struct cmd_msg* msg = NULL;
     if (proto_man::decode_cmd_msg(body, len, &msg)) {
-        if (!service_man::on_recv_cmd_msg((session*)s, msg)) {
-            s->close();
-        }
+        if (!service_man::on_recv_cmd_msg((session*)s, msg)) { s->close(); }
         proto_man::cmd_msg_free(msg);
     }
 }
@@ -141,7 +139,7 @@ static void on_connection(uv_stream_t* server, int status) {
     client->data = (void*)s;
     uv_accept(server, (uv_stream_t*)client);
 
-    SOCKADDR_IN addr;
+    struct sockaddr_in addr;
     int len = sizeof(addr);
     uv_tcp_getpeername((const uv_tcp_t*)client, (sockaddr*)&addr, &len);
     uv_ip4_name(&addr, s->c_address, sizeof(s->c_address));
@@ -169,11 +167,10 @@ void netbus::start_tcp_server(int port) {
     memset(listen, 0, sizeof(uv_tcp_t));
     uv_tcp_init(uv_default_loop(), listen);
 
-    SOCKADDR_IN addr;
+    struct sockaddr_in addr;
     char* host{ "127.0.0.1" };
     uv_ip4_addr(host, port, &addr);
-    int ret = uv_tcp_bind(listen, (SOCKADDR*)&addr, 0);
-    if (ret != 0) {
+    if (uv_tcp_bind(listen, (struct sockaddr*)&addr, 0) != 0) {
         printf("bind error\n");
         free(listen);
         return;
@@ -188,11 +185,10 @@ void netbus::start_ws_server(int port) {
     memset(listen, 0, sizeof(uv_tcp_t));
     uv_tcp_init(uv_default_loop(), listen);
 
-    SOCKADDR_IN addr;
+    struct sockaddr_in addr;
     char* host{ "127.0.0.1" };
     uv_ip4_addr(host, port, &addr);
-    int ret = uv_tcp_bind(listen, (SOCKADDR*)&addr, 0);
-    if (ret != 0) {
+    if (uv_tcp_bind(listen, (struct sockaddr*)&addr, 0) != 0) {
         printf("bind error\n");
         free(listen);
         return;
