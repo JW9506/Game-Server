@@ -6,6 +6,7 @@
 #include <cryptopp/hex.h>
 #include "base64_encoder.h"
 #include "sha1.h"
+#include "mysql.h"
 #include "mysql_wrapper.h"
 #include "hiredis/hiredis.h"
 #include "redis_wrapper.h"
@@ -15,8 +16,7 @@
 using namespace CryptoPP;
 using namespace std;
 
-static void res(const char* err,
-                std::vector<std::vector<std::string>>& result) {
+static void res(const char* err, MYSQL_RES* result) {
     if (err) {
         printf("%s\n", err);
         return;

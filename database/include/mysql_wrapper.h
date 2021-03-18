@@ -1,6 +1,5 @@
 #pragma once
-#include <vector>
-#include <string>
+struct st_mysql_res;
 
 class mysql_wrapper {
   public:
@@ -8,10 +7,11 @@ class mysql_wrapper {
                         const char* uname, const char* pwd,
                         void (*open_cb)(const char* err, void* context,
                                         void* udata),
-                        void* udata = NULL);
+                        void* udata = nullptr);
     static void close(void* context);
-    static void
-    query(void* context, char* sql,
-          void (*query_cb)(const char* err,
-                           std::vector<std::vector<std::string>>& result));
+    static void query(void* context, const char* sql,
+                      void (*query_cb)(const char* err,
+                                       struct st_mysql_res* result,
+                                       void* udata),
+                      void* udata = nullptr);
 };

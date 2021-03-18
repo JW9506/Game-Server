@@ -19,10 +19,10 @@ struct connect_req {
 struct query_req {
     void* context;
     char* sql;
-    void (*query_cb)(const char* err,
-                     std::vector<std::vector<std::string>>& result);
-    std::vector<std::vector<std::string>>* result;
+    void (*query_cb)(const char* err, MYSQL_RES* result, void* udata);
+    MYSQL_RES* result;
     char* err;
+    void* udata;
 };
 
 struct mysql_context {
@@ -90,28 +90,17 @@ static void query_work(uv_work_t* req) {
         return;
     }
     MYSQL_RES* result = mysql_store_result(pConn);
-    if (!result) {
-        uv_mutex_unlock(&c->lock);
-        return;
-    }
-    int num_fields = (int)mysql_num_fields(result);
-    r->result = new std::vector<std::vector<std::string>>;
-    int line_num = mysql_field_count(pConn);
-    MYSQL_ROW row;
-    while (row = mysql_fetch_row(result)) {
-        r->result->emplace_back();
-        for (int i = 0; i < num_fields; ++i) {
-            r->result->back().push_back(row[i]);
-        }
-    }
-    mysql_free_result(result);
+    r->result = result;
     uv_mutex_unlock(&c->lock);
 }
 
 static void on_query_complete(uv_work_t* req, int status) {
     struct query_req* r = (struct query_req*)req->data;
-    if (r->query_cb && r->result) { r->query_cb(r->err, *r->result); }
-    if (r->result) { delete r->result; }
+    if (r->query_cb && r->result) { r->query_cb(r->err, r->result, r->udata); }
+    if (r->result) {
+        mysql_free_result(r->result);
+        r->result = NULL;
+    }
     if (r->err) { free(r->err); }
     if (r->sql) { free(r->sql); }
     free(r);
@@ -142,15 +131,16 @@ void mysql_wrapper::close(void* context) {
     uv_queue_work(uv_default_loop(), w, close_work, on_close_complete);
 }
 
-void mysql_wrapper::query(
-    void* context, char* sql,
-    void (*query_cb)(const char* err,
-                     std::vector<std::vector<std::string>>& result)) {
+void mysql_wrapper::query(void* context, const char* sql,
+                          void (*query_cb)(const char* err, MYSQL_RES* result,
+                                           void* udata),
+                          void* udata) {
     _new(uv_work_t, w);
     _new(struct query_req, r);
     r->context = context;
     r->sql = _strdup(sql);
     r->query_cb = query_cb;
+    r->udata = udata;
     w->data = (void*)r;
     uv_queue_work(uv_default_loop(), w, query_work, on_query_complete);
 }
