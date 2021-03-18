@@ -31,7 +31,7 @@ static void res(const char* err,
 static void task01(void* context) {
     mysql_wrapper::close(context);
 }
-static void open_cb(const char* err, void* context) {
+static void open_cb(const char* err, void* context, void* udata) {
     if (err) {
         printf("%s\n", err);
         return;

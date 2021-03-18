@@ -1,5 +1,7 @@
 #include "lua_wrapper.h"
 #include "logger.h"
+#include <tolua_fix.h>
+#include "mysql_export_to_lua.h"
 #include <cstdio>
 
 static lua_State* g_lua_State = NULL;
@@ -60,8 +62,11 @@ static int lua_log_error(lua_State* L) {
 
 void lua_wrapper::init() {
     g_lua_State = luaL_newstate();
-    luaL_openlibs(g_lua_State);
     lua_atpanic(g_lua_State, lua_panic);
+    luaL_openlibs(g_lua_State);
+    toluafix_open(g_lua_State);
+
+    register_mysql_export(g_lua_State);
     lua_wrapper::reg_func2lua("log_debug", lua_log_debug);
     lua_wrapper::reg_func2lua("log_warning", lua_log_warning);
     lua_wrapper::reg_func2lua("log_error", lua_log_error);
@@ -85,4 +90,83 @@ bool lua_wrapper::exe_lua_file(const char* lua_file) {
 void lua_wrapper::reg_func2lua(const char* name, lua_CFunction fun) {
     lua_pushcfunction(g_lua_State, fun);
     lua_setglobal(g_lua_State, name);
+}
+
+lua_State* lua_wrapper::lua_state() { return g_lua_State; }
+
+static bool pushFunctionByHandler(int nHandler) {
+    toluafix_get_function_by_refid(g_lua_State, nHandler);
+    if (!lua_isfunction(g_lua_State, -1)) {
+        log_error(
+            "[LUA ERROR] function refid '%d' does not reference a Lua function",
+            nHandler);
+        lua_pop(g_lua_State, 1);
+        return false;
+    }
+    return true;
+}
+
+static int executeFunction(int numArgs) {
+    int functionIndex = -(numArgs + 1);
+    if (!lua_isfunction(g_lua_State, functionIndex)) {
+        log_error("value at stack [%d] is not function", functionIndex);
+        lua_pop(g_lua_State, numArgs + 1); // remove function and arguments
+        return 0;
+    }
+
+    int traceback = 0;
+    lua_getglobal(g_lua_State,
+                  "__G__TRACKBACK__"); /* L: ... func arg1 arg2 ... G */
+    if (!lua_isfunction(g_lua_State, -1)) {
+        lua_pop(g_lua_State, 1); /* L: ... func arg1 arg2 ... */
+    } else {
+        lua_insert(g_lua_State,
+                   functionIndex - 1); /* L: ... G func arg1 arg2 ... */
+        traceback = functionIndex - 1;
+    }
+
+    int error = 0;
+    error = lua_pcall(g_lua_State, numArgs, 1, traceback); /* L: ... [G] ret */
+    if (error) {
+        if (traceback == 0) {
+            log_error("[LUA ERROR] %s",
+                      lua_tostring(g_lua_State, -1)); /* L: ... error */
+            lua_pop(g_lua_State, 1); // remove error message from stack
+        } else                       /* L: ... G error */
+        {
+            lua_pop(g_lua_State,
+                    2); // remove __G__TRACKBACK__ and error message from stack
+        }
+        return 0;
+    }
+
+    // get return value
+    int ret = 0;
+    if (lua_isnumber(g_lua_State, -1)) {
+        ret = (int)lua_tointeger(g_lua_State, -1);
+    } else if (lua_isboolean(g_lua_State, -1)) {
+        ret = (int)lua_toboolean(g_lua_State, -1);
+    }
+    // remove return value from stack
+    lua_pop(g_lua_State, 1); /* L: ... [G] */
+
+    if (traceback) {
+        lua_pop(g_lua_State,
+                1); // remove __G__TRACKBACK__ from stack      /* L: ... */
+    }
+    return ret;
+}
+
+int lua_wrapper::execute_script_handle(int nHandler, int numArgs) {
+    int ret = 0;
+    if (pushFunctionByHandler(nHandler)) {
+        if (numArgs > 0) { lua_insert(g_lua_State, -(numArgs + 1)); }
+        ret = executeFunction(numArgs);
+    }
+    lua_settop(g_lua_State, 0);
+    return ret;
+}
+
+void lua_wrapper::remove_script_handle(int nHandler) {
+    toluafix_remove_function_by_refid(g_lua_State, nHandler);
 }

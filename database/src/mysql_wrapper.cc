@@ -10,9 +10,10 @@ struct connect_req {
     char* db_name;
     char* uname;
     char* upwd;
-    void (*open_cb)(const char* err, void* context);
+    void (*open_cb)(const char* err, void* context, void* udata);
     char* err;
     void* context;
+    void* udata;
 };
 
 struct query_req {
@@ -50,7 +51,7 @@ static void connect_work(uv_work_t* req) {
 
 static void on_connect_work_complete(uv_work_t* req, int status) {
     struct connect_req* r = (struct connect_req*)req->data;
-    r->open_cb(r->err, r->context);
+    r->open_cb(r->err, r->context, r->udata);
     if (r->ip) { free(r->ip); }
     if (r->db_name) { free(r->db_name); }
     if (r->uname) { free(r->uname); }
@@ -117,9 +118,11 @@ static void on_query_complete(uv_work_t* req, int status) {
     free(req);
 }
 
-void mysql_wrapper::connect(char* ip, int port, char* db_name, char* uname,
-                            char* pwd,
-                            void (*open_cb)(const char* err, void* context)) {
+void mysql_wrapper::connect(const char* ip, int port, const char* db_name,
+                            const char* uname, const char* pwd,
+                            void (*open_cb)(const char* err, void* context,
+                                            void* udata),
+                            void* udata) {
     _new(uv_work_t, w);
     _new(struct connect_req, r);
     r->ip = _strdup(ip);
@@ -128,6 +131,7 @@ void mysql_wrapper::connect(char* ip, int port, char* db_name, char* uname,
     r->uname = _strdup(uname);
     r->upwd = _strdup(pwd);
     r->open_cb = open_cb;
+    r->udata = udata;
     w->data = (void*)r;
     uv_queue_work(uv_default_loop(), w, connect_work, on_connect_work_complete);
 }

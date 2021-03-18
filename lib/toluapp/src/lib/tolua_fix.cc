@@ -1,10 +1,6 @@
 
 #include "tolua_fix.h"
-#include "base/CCRef.h"
-#include "LuaBasicConversions.h"
 #include <stdlib.h>
-
-using namespace cocos2d;
 
 static int s_function_ref_id = 0;
 
@@ -23,6 +19,7 @@ TOLUA_API void toluafix_open(lua_State* L)
     lua_rawset(L, LUA_REGISTRYINDEX);
 }
 
+#if 0
 TOLUA_API int toluafix_pushusertype_ccobject(lua_State* L,
                                              int refid,
                                              int* p_refid,
@@ -34,7 +31,7 @@ TOLUA_API int toluafix_pushusertype_ccobject(lua_State* L,
         lua_pushnil(L);
         return -1;
     }
-    
+
     Ref* vPtr = static_cast<Ref*>(ptr);
     const char* vType = getLuaTypeName(vPtr, type);
 
@@ -61,7 +58,7 @@ TOLUA_API int toluafix_pushusertype_ccobject(lua_State* L,
     }
 
     tolua_pushusertype_and_addtoroot(L, vPtr, vType);
-    
+
     return 0;
 }
 
@@ -126,8 +123,7 @@ TOLUA_API int toluafix_remove_ccobject_by_refid(lua_State* L, int refid)
         lua_pushstring(L, "tolua_ubox");                            /* stack: mt key */
         lua_rawget(L, LUA_REGISTRYINDEX);                           /* stack: mt ubox */
     };
-    
-    
+
     // cleanup root
     tolua_remove_value_from_root(L, ptr);
 
@@ -165,7 +161,7 @@ TOLUA_API int toluafix_remove_ccobject_by_refid(lua_State* L, int refid)
     //printf("[LUA] remove CCObject, refid: %d, ptr: %x, type: %s\n", refid, (int)ptr, type);
     return 0;
 }
-
+#endif
 TOLUA_API int toluafix_ref_function(lua_State* L, int lo, int def)
 {
     // function at lo
@@ -208,6 +204,7 @@ TOLUA_API void toluafix_remove_function_by_refid(lua_State* L, int refid)
     // luaL_unref(L, LUA_REGISTRYINDEX, refid);
 }
 
+#if 0
 // check lua value is funciton
 TOLUA_API int toluafix_isfunction(lua_State* L, int lo, const char* type, int def, tolua_Error* err)
 {
@@ -256,3 +253,4 @@ TOLUA_API void toluafix_stack_dump(lua_State* L, const char* label)
     }
     printf("\n");
 }
+#endif
