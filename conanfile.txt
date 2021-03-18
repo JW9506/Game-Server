@@ -3,6 +3,7 @@ libuv/1.38.1
 http_parser/2.9.4
 cryptopp/8.4.0
 protobuf/3.9.1
+mysql-connector-c/6.1.11
 
 [generators]
 cmake

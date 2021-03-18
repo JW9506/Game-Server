@@ -1,12 +1,42 @@
 #include <stdio.h>
 #include <string>
+#include <vector>
 #include <cryptopp/base64.h>
 #include <cryptopp/sha1_armv4.h>
 #include <cryptopp/hex.h>
 #include "base64_encoder.h"
 #include "sha1.h"
+#include "mysql_wrapper.h"
+#include "time_list.h"
+#include <uv.h>
 using namespace CryptoPP;
 using namespace std;
+
+static void res(const char* err,
+                std::vector<std::vector<std::string>>& result) {
+    if (err) {
+        printf("%s\n", err);
+        return;
+    }
+    for (auto&& row : result) {
+        for (auto&& item : row) {
+            std::cout << item << ' ';
+        }
+        std::cout << std::endl;
+    }
+}
+static void task01(void* context) {
+    mysql_wrapper::close(context);
+}
+static void open_cb(const char* err, void* context) {
+    if (err) {
+        printf("%s\n", err);
+        return;
+    }
+    mysql_wrapper::query(context, "select * from foo", res);
+    mysql_wrapper::close(context);
+    // schedule_once(task01, context, 0);
+}
 
 int main(int argc, char** argv) {
 // Base64Encoder
@@ -77,6 +107,7 @@ int main(int argc, char** argv) {
     //     MakeParameters(Name::DecodingLookupArray(), (const int*)lookup);
     // decoder.IsolatedInitialize(params);
 
+#ifdef a
     char raw[] = "Yoda said"; // LSsJbPn8hjD8gusSWzIRhF/f0RM=
     // unsigned char sha_out[512] = {0};
     char sha_out[512] = {0};
@@ -85,5 +116,9 @@ int main(int argc, char** argv) {
     size_t out_size;
     base64_encode(sha_out, out, &out_size);
     printf("%s %lld\n", out, out_size);
+#endif
+    mysql_wrapper::connect("127.0.0.1", 3306, "class_sql", "root", "root", open_cb);
+
+    uv_run(uv_default_loop(), UV_RUN_DEFAULT);
     return 0;
 }
