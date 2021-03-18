@@ -11,6 +11,7 @@
 #include "redis_wrapper.h"
 #include "time_list.h"
 #include <uv.h>
+#include "lua_wrapper.h"
 using namespace CryptoPP;
 using namespace std;
 
@@ -137,7 +138,14 @@ int main(int argc, char** argv) {
 
     uv_run(uv_default_loop(), UV_RUN_DEFAULT);
 #endif
+#ifdef a
     redis_wrapper::connect("127.0.0.1", 6379, redis_cb);
     uv_run(uv_default_loop(), UV_RUN_DEFAULT);
+#endif
+    lua_wrapper::init();
+    if (!lua_wrapper::exe_lua_file("./main.lua")) {
+        std::cout << "lua exec err" << std::endl;
+    }
+    lua_wrapper::exit();
     return 0;
 }
