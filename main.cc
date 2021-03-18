@@ -7,6 +7,8 @@
 #include "base64_encoder.h"
 #include "sha1.h"
 #include "mysql_wrapper.h"
+#include "hiredis/hiredis.h"
+#include "redis_wrapper.h"
 #include "time_list.h"
 #include <uv.h>
 using namespace CryptoPP;
@@ -36,6 +38,19 @@ static void open_cb(const char* err, void* context) {
     mysql_wrapper::query(context, "select * from foo", res);
     mysql_wrapper::close(context);
     // schedule_once(task01, context, 0);
+}
+
+static void redis_cb02(const char* err, redisReply* result) {
+    if (err) {
+        printf("%s\n", err);
+        return;
+    }
+    printf("%s\n", result->str);
+}
+
+static void redis_cb(const char* err, void* context) {
+    redis_wrapper::query(context, "ping", redis_cb02);
+    redis_wrapper::close(context);
 }
 
 int main(int argc, char** argv) {
@@ -117,8 +132,12 @@ int main(int argc, char** argv) {
     base64_encode(sha_out, out, &out_size);
     printf("%s %lld\n", out, out_size);
 #endif
+#ifdef a
     mysql_wrapper::connect("127.0.0.1", 3306, "class_sql", "root", "root", open_cb);
 
+    uv_run(uv_default_loop(), UV_RUN_DEFAULT);
+#endif
+    redis_wrapper::connect("127.0.0.1", 6379, redis_cb);
     uv_run(uv_default_loop(), UV_RUN_DEFAULT);
     return 0;
 }

@@ -4,6 +4,7 @@ http_parser/2.9.4
 cryptopp/8.4.0
 protobuf/3.9.1
 mysql-connector-c/6.1.11
+hiredis/1.0.0
 
 [generators]
 cmake
