@@ -1,0 +1,18 @@
+{
+ "options": [
+  [
+   "lua:compile_as_cpp",
+   "False"
+  ],
+  [
+   "lua:shared",
+   "False"
+  ]
+ ],
+ "root": {
+  "name": null,
+  "version": null,
+  "user": null,
+  "channel": null
+ }
+}

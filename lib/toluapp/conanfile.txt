@@ -1,0 +1,5 @@
+[requires]
+lua/5.3.5
+
+[generators]
+cmake

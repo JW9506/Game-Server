@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="C:\Users\victor\VSCode\msvc_cmake\lib\toluapp\src\bin\tolua.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\victor\VSCode\msvc_cmake\lib\toluapp\src\bin\toluabind.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\victor\VSCode\msvc_cmake\lib\toluapp\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{9212E2F3-D178-3D0E-9405-7FB4BB56F759}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

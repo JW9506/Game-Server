@@ -1,0 +1,36 @@
+[settings]
+    arch=x86_64
+    build_type=Debug
+    compiler=Visual Studio
+    compiler.runtime=MDd
+    compiler.version=15
+    os=Windows
+
+[requires]
+    lua/5.Y.Z
+
+[options]
+
+
+[full_settings]
+    arch=x86_64
+    arch_build=x86_64
+    build_type=Debug
+    compiler=Visual Studio
+    compiler.runtime=MDd
+    compiler.version=15
+    os=Windows
+    os_build=Windows
+
+[full_requires]
+    lua/5.3.5:8cf01e2f50fcd6b63525e70584df0326550364e1
+
+[full_options]
+    lua:compile_as_cpp=False
+    lua:shared=False
+
+[recipe_hash]
+
+
+[env]
+
