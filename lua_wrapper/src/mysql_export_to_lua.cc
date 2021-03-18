@@ -1,7 +1,6 @@
 #include "mysql_export_to_lua.h"
 #include <tolua++.h>
 #include <tolua_fix.h>
-#include "logger.h"
 #include "mysql_wrapper.h"
 #include "lua_wrapper.h"
 #include "mysql.h"

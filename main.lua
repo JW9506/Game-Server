@@ -52,6 +52,22 @@ mysql_wrapper.connect("127.0.0.1", 3306, "class_sql", "root", "root", function(e
   end)
 end)
 
-
+redis_wrapper.connect("127.0.0.1", 6379, function(err, context)
+  log_debug("redis lua in!")
+  redis_wrapper.query(context, "hmset 999 name 'foo' age '9'", function(err, result)
+    if (err) then
+      print(err)
+      return
+    end
+    print(result)
+  end)
+  redis_wrapper.query(context, "hgetall 999", function(err, result)
+    if (err) then
+      print(err)
+      return
+    end
+    print_r(result)
+  end)
+end)
 -- local b = 3
 -- b[1] = 0

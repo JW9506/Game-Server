@@ -41,7 +41,7 @@ static void open_cb(const char* err, void* context, void* udata) {
     // schedule_once(task01, context, 0);
 }
 
-static void redis_cb02(const char* err, redisReply* result) {
+static void redis_cb02(const char* err, redisReply* result, void* udata) {
     if (err) {
         printf("%s\n", err);
         return;
@@ -49,7 +49,7 @@ static void redis_cb02(const char* err, redisReply* result) {
     printf("%s\n", result->str);
 }
 
-static void redis_cb(const char* err, void* context) {
+static void redis_cb(const char* err, void* context, void* udata) {
     redis_wrapper::query(context, "ping", redis_cb02);
     redis_wrapper::close(context);
 }

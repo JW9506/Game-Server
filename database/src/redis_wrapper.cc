@@ -78,7 +78,12 @@ static void query_work(uv_work_t* req) {
     r->result = NULL;
     r->err = NULL;
     redisReply* reply = (redisReply*)redisCommand(conn, r->cmd);
-    r->result = reply;
+    if (reply->type == REDIS_REPLY_ERROR) {
+        r->err = _strdup(reply->str);
+        freeReplyObject(reply);
+    } else {
+        r->result = reply;
+    }
     uv_mutex_unlock(&c->lock);
 }
 
@@ -94,7 +99,7 @@ static void on_query_complete(uv_work_t* req, int status) {
     free(req);
 }
 
-void redis_wrapper::connect(char* ip, int port,
+void redis_wrapper::connect(const char* ip, int port,
                             void (*open_cb)(const char* err, void* context,
                                             void* udata),
                             void* udata) {
@@ -114,7 +119,7 @@ void redis_wrapper::close(void* context) {
     uv_queue_work(uv_default_loop(), w, close_work, on_close_complete);
 }
 
-void redis_wrapper::query(void* context, char* cmd,
+void redis_wrapper::query(void* context, const char* cmd,
                           void (*query_cb)(const char* err, redisReply* result,
                                            void* udata),
                           void* udata) {
