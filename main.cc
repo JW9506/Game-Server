@@ -143,7 +143,7 @@ int main(int argc, char** argv) {
     uv_run(uv_default_loop(), UV_RUN_DEFAULT);
 #endif
     lua_wrapper::init();
-    if (!lua_wrapper::exe_lua_file("./main.lua")) {
+    if (!lua_wrapper::execute_file("./main.lua")) {
         std::cout << "lua exec err" << std::endl;
     }
     lua_wrapper::exit();

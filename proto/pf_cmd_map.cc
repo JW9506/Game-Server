@@ -7,5 +7,5 @@ std::map<int, std::string> pf_cmd_map{
 };
 
 void init_pf_cmd_map() {
-    proto_man::register_pb_cmd_map(pf_cmd_map);
+    proto_man::register_protobuf_cmd_map(pf_cmd_map);
 }

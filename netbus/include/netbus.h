@@ -9,8 +9,8 @@ class netbus {
 
   public:
     void init();
-    void start_tcp_server(int port);
-    void start_udp_server(int port);
-    void start_ws_server(int port);
+    void tcp_server(int port);
+    void udp_server(int port);
+    void ws_server(int port);
     void run();
 };

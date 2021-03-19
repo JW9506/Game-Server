@@ -20,7 +20,7 @@ struct cmd_msg {
 class proto_man {
   public:
     static void init(int proto_type);
-    static void register_pb_cmd_map(std::map<int, std::string>& map);
+    static void register_protobuf_cmd_map(std::map<int, std::string>& map);
     static int proto_type();
     static const char* protobuf_cmd_name(int ctype);
     static bool decode_cmd_msg(unsigned char* cmd, int cmd_len,

@@ -27,7 +27,7 @@ const char* proto_man::protobuf_cmd_name(int ctype) {
     return g_pb_cmd_map[ctype].c_str();
 }
 
-void proto_man::register_pb_cmd_map(std::map<int, std::string>& map) {
+void proto_man::register_protobuf_cmd_map(std::map<int, std::string>& map) {
     g_pb_cmd_map = map;
 }
 
@@ -115,10 +115,8 @@ unsigned char* proto_man::encode_msg_to_raw(const struct cmd_msg* msg,
     raw_data[1] = (msg->stype & 0xff00) >> 8;
     raw_data[2] = msg->ctype & 0xff;
     raw_data[3] = (msg->ctype & 0xff00) >> 8;
-    memcpy(raw_data+4, &msg->utag, 4);
+    memcpy(raw_data + 4, &msg->utag, 4);
     return raw_data;
 }
 
-void proto_man::msg_raw_free(unsigned char* raw) {
-    free(raw);
-}
+void proto_man::msg_raw_free(unsigned char* raw) { free(raw); }
