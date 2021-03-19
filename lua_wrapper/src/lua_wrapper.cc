@@ -6,6 +6,8 @@
 #include "service_export_to_lua.h"
 #include "session_export_to_lua.h"
 #include "scheduler_export_to_lua.h"
+#include "netbus_export_to_lua.h"
+#include "proto_man_export_to_lua.h"
 #include <cstdio>
 #include <string>
 
@@ -136,6 +138,8 @@ void lua_wrapper::init() {
     register_service_export(g_lua_State);
     register_session_export(g_lua_State);
     register_scheduler_export(g_lua_State);
+    register_netbus_export(g_lua_State);
+    register_proto_man_export(g_lua_State);
 }
 
 void lua_wrapper::exit() {
