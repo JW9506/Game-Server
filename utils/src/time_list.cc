@@ -4,13 +4,6 @@
 
 typedef void (*_timer_cb)(void*);
 
-struct timer {
-    uv_timer_t uv_timer;
-    _timer_cb cb;
-    void* udata;
-    int repeat_count;
-};
-
 #define _new(type, var) type* var = (type*)calloc(1, sizeof(type))
 #define _free           free
 
@@ -56,3 +49,5 @@ struct timer* schedule_repeat(_timer_cb cb, void* udata, int after_msec,
 struct timer* schedule_once(_timer_cb cb, void* udata, int after_msec) {
     return schedule_repeat(cb, udata, after_msec, 1, after_msec);
 }
+
+void* get_timer_udata(struct timer* t) { return t->udata; }

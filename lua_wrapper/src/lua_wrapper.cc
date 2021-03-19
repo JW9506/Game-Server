@@ -5,6 +5,7 @@
 #include "redis_export_to_lua.h"
 #include "service_export_to_lua.h"
 #include "session_export_to_lua.h"
+#include "scheduler_export_to_lua.h"
 #include <cstdio>
 #include <string>
 
@@ -127,6 +128,7 @@ void lua_wrapper::init() {
     register_redis_export(g_lua_State);
     register_service_export(g_lua_State);
     register_session_export(g_lua_State);
+    register_scheduler_export(g_lua_State);
 }
 
 void lua_wrapper::exit() {
@@ -214,7 +216,7 @@ static int executeFunction(int numArgs) {
     return ret;
 }
 
-int lua_wrapper::execute_script_handle(int nHandler, int numArgs) {
+int lua_wrapper::execute_script_handle(unsigned int nHandler, int numArgs) {
     int ret = 0;
     if (pushFunctionByHandler(nHandler)) {
         if (numArgs > 0) { lua_insert(g_lua_State, -(numArgs + 1)); }
@@ -224,6 +226,6 @@ int lua_wrapper::execute_script_handle(int nHandler, int numArgs) {
     return ret;
 }
 
-void lua_wrapper::remove_script_handle(int nHandler) {
+void lua_wrapper::remove_script_handle(unsigned int nHandler) {
     toluafix_remove_function_by_refid(g_lua_State, nHandler);
 }

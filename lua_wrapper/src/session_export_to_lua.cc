@@ -203,7 +203,7 @@ lua_failed:
     return 0;
 }
 
-static int lua_get_adress(lua_State* tolua_S) {
+static int lua_get_address(lua_State* tolua_S) {
     session* s = (session*)tolua_touserdata(tolua_S, 1, 0);
     if (!s) { goto lua_failed; }
     int client_port;
@@ -223,7 +223,7 @@ int register_session_export(lua_State* tolua_S) {
         tolua_beginmodule(tolua_S, "session");
         tolua_function(tolua_S, "close", lua_session_close);
         tolua_function(tolua_S, "send_msg", lua_send_msg);
-        tolua_function(tolua_S, "get_address", lua_get_adress);
+        tolua_function(tolua_S, "get_address", lua_get_address);
         tolua_endmodule(tolua_S);
     }
     lua_pop(tolua_S, 1);

@@ -12,6 +12,6 @@ class lua_wrapper {
     static void reg_func2lua(const char* name, lua_CFunction fun);
 
   public:
-    static int execute_script_handle(int nHandler, int numArgs);
-    static void remove_script_handle(int nHandler);
+    static int execute_script_handle(unsigned int nHandler, int numArgs);
+    static void remove_script_handle(unsigned int nHandler);
 };

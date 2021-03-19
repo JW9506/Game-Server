@@ -75,7 +75,7 @@ end)
  ]]
 
 
-local my_service = {
+--[[ local my_service = {
   on_session_recv_cmd = function(session, msg)
   end,
   on_session_disconnect = function(session)
@@ -83,4 +83,15 @@ local my_service = {
 }
 
 local ret = service.register(100, my_service)
-print(ret)
+print(ret) ]]
+
+local timer = scheduler.schedule(function()
+  print("hello world!!")
+end, 2000, 1, 2000)
+
+scheduler.once(function()
+  scheduler.cancel(timer)
+  print("timer canceled")
+end, 3500)
+
+logger.error("Foo")
