@@ -10,6 +10,7 @@ conan_basic_setup()
 add_definitions(-DUNICODE -D_CRT_SECURE_NO_WARNINGS)
 
 if (WIN32)
+  SET(CMAKE_CXX_FLAGS "$ENV{CXXFLAGS} /wd4312")
   set(DEPS)
 endif()
 add_subdirectory(lib/mjson)
