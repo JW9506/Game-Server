@@ -3,6 +3,7 @@
 #include <tolua_fix.h>
 #include "mysql_export_to_lua.h"
 #include "redis_export_to_lua.h"
+#include "service_export_to_lua.h"
 #include <cstdio>
 
 static lua_State* g_lua_State = NULL;
@@ -69,6 +70,7 @@ void lua_wrapper::init() {
 
     register_mysql_export(g_lua_State);
     register_redis_export(g_lua_State);
+    register_service_export(g_lua_State);
     lua_wrapper::reg_func2lua("log_debug", lua_log_debug);
     lua_wrapper::reg_func2lua("log_warning", lua_log_warning);
     lua_wrapper::reg_func2lua("log_error", lua_log_error);

@@ -1,5 +1,6 @@
 -- print("hell
-function print_r ( t )
+
+--[[ function print_r ( t )
     local print_r_cache={}
     local function sub_print_r(t,indent)
         if (print_r_cache[tostring(t)]) then
@@ -71,3 +72,15 @@ redis_wrapper.connect("127.0.0.1", 6379, function(err, context)
 end)
 -- local b = 3
 -- b[1] = 0
+ ]]
+
+
+local my_service = {
+  on_session_recv_cmd = function(session, msg)
+  end,
+  on_session_disconnect = function(session)
+  end,
+}
+
+local ret = service.register(100, my_service)
+print(ret)
