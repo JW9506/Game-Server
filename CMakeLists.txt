@@ -32,7 +32,7 @@ file(GLOB_RECURSE protob "./proto/*.cc")
 file(GLOB_RECURSE db "./database/*.cc")
 file(GLOB_RECURSE lua_wrapper "./lua_wrapper/*.cc")
 add_executable(main main.cc ${utils} ${db} ${lua_wrapper})
-add_executable(test apps/test/main.cc ${netbus} ${utils} ${protob} ${db} ${lua_wrapper} ${toluapp_fix})
+add_executable(test apps/cpp_test/main.cc ${netbus} ${utils} ${protob} ${db} ${lua_wrapper} ${toluapp_fix})
 add_executable(client client/client.cc ${netbus} ${utils} ${protob})
 
 target_link_libraries(main ${CONAN_LIBS} toluapp_lib)
