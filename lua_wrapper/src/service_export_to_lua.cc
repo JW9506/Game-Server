@@ -97,6 +97,8 @@ static void init_service_function_map(lua_State* L) {
 }
 
 static void push_proto_message_tolua(const google::protobuf::Message* msg) {
+    using namespace google::protobuf;
+    using CppType = FieldDescriptor::CppType;
     auto m_pState{ lua_wrapper::lua_state() };
     auto desc{ msg->GetDescriptor() };
     auto refl{ msg->GetReflection() };
@@ -111,49 +113,47 @@ static void push_proto_message_tolua(const google::protobuf::Message* msg) {
             for (int i = 0; i < size; ++i) {
                 char str[32]{ 0 };
                 switch (fd->cpp_type()) {
-                case google::protobuf::FieldDescriptor::CppType::CPPTYPE_DOUBLE:
+                case CppType::CPPTYPE_DOUBLE:
                     lua_pushnumber(m_pState,
                                    refl->GetRepeatedDouble(*msg, fd, i));
                     break;
-                case google::protobuf::FieldDescriptor::CppType::CPPTYPE_FLOAT:
+                case CppType::CPPTYPE_FLOAT:
                     lua_pushnumber(m_pState,
                                    refl->GetRepeatedFloat(*msg, fd, i));
                     break;
-                case google::protobuf::FieldDescriptor::CppType::CPPTYPE_INT64:
+                case CppType::CPPTYPE_INT64:
                     snprintf(str, sizeof(str), "%lld",
                              refl->GetRepeatedInt64(*msg, fd, i));
                     lua_pushstring(m_pState, str);
                     break;
-                case google::protobuf::FieldDescriptor::CppType::CPPTYPE_UINT64:
+                case CppType::CPPTYPE_UINT64:
                     snprintf(str, sizeof(str), "%llu",
                              refl->GetRepeatedUInt64(*msg, fd, i));
                     lua_pushstring(m_pState, str);
                     break;
-                case google::protobuf::FieldDescriptor::CppType::CPPTYPE_ENUM:
+                case CppType::CPPTYPE_ENUM:
                     lua_pushinteger(
                         m_pState,
                         (lua_Integer)refl->GetRepeatedEnum(*msg, fd, i));
                     break;
-                case google::protobuf::FieldDescriptor::CppType::CPPTYPE_INT32:
+                case CppType::CPPTYPE_INT32:
                     lua_pushinteger(m_pState,
                                     refl->GetRepeatedInt32(*msg, fd, i));
                     break;
-                case google::protobuf::FieldDescriptor::CppType::CPPTYPE_UINT32:
+                case CppType::CPPTYPE_UINT32:
                     lua_pushinteger(m_pState,
                                     refl->GetRepeatedUInt32(*msg, fd, i));
                     break;
-                case google::protobuf::FieldDescriptor::CppType::
-                    CPPTYPE_STRING: {
+                case CppType::CPPTYPE_STRING: {
                     auto& str{ refl->GetRepeatedString(*msg, fd, i) };
                     lua_pushlstring(m_pState, str.c_str(), str.size());
                     break;
                 }
-                case google::protobuf::FieldDescriptor::CppType::CPPTYPE_BOOL:
+                case CppType::CPPTYPE_BOOL:
                     lua_pushboolean(m_pState,
                                     refl->GetRepeatedBool(*msg, fd, i));
                     break;
-                case google::protobuf::FieldDescriptor::CppType::
-                    CPPTYPE_MESSAGE:
+                case CppType::CPPTYPE_MESSAGE:
                     push_proto_message_tolua(
                         &refl->GetRepeatedMessage(*msg, fd, i));
                     break;
@@ -165,38 +165,38 @@ static void push_proto_message_tolua(const google::protobuf::Message* msg) {
         } else {
             char str[32]{ 0 };
             switch (fd->cpp_type()) {
-            case google::protobuf::FieldDescriptor::CppType::CPPTYPE_DOUBLE:
+            case CppType::CPPTYPE_DOUBLE:
                 lua_pushnumber(m_pState, refl->GetDouble(*msg, fd));
                 break;
-            case google::protobuf::FieldDescriptor::CppType::CPPTYPE_FLOAT:
+            case CppType::CPPTYPE_FLOAT:
                 lua_pushnumber(m_pState, refl->GetFloat(*msg, fd));
                 break;
-            case google::protobuf::FieldDescriptor::CppType::CPPTYPE_INT64:
+            case CppType::CPPTYPE_INT64:
                 snprintf(str, sizeof(str), "%lld", refl->GetInt64(*msg, fd));
                 lua_pushstring(m_pState, str);
                 break;
-            case google::protobuf::FieldDescriptor::CppType::CPPTYPE_UINT64:
+            case CppType::CPPTYPE_UINT64:
                 snprintf(str, sizeof(str), "%llu", refl->GetUInt64(*msg, fd));
                 lua_pushstring(m_pState, str);
                 break;
-            case google::protobuf::FieldDescriptor::CppType::CPPTYPE_ENUM:
+            case CppType::CPPTYPE_ENUM:
                 lua_pushinteger(m_pState, (lua_Integer)refl->GetEnum(*msg, fd));
                 break;
-            case google::protobuf::FieldDescriptor::CppType::CPPTYPE_INT32:
+            case CppType::CPPTYPE_INT32:
                 lua_pushinteger(m_pState, refl->GetInt32(*msg, fd));
                 break;
-            case google::protobuf::FieldDescriptor::CppType::CPPTYPE_UINT32:
+            case CppType::CPPTYPE_UINT32:
                 lua_pushinteger(m_pState, refl->GetUInt32(*msg, fd));
                 break;
-            case google::protobuf::FieldDescriptor::CppType::CPPTYPE_STRING: {
+            case CppType::CPPTYPE_STRING: {
                 auto& str{ refl->GetString(*msg, fd) };
                 lua_pushlstring(m_pState, str.c_str(), str.size());
                 break;
             }
-            case google::protobuf::FieldDescriptor::CppType::CPPTYPE_BOOL:
+            case CppType::CPPTYPE_BOOL:
                 lua_pushboolean(m_pState, refl->GetBool(*msg, fd));
                 break;
-            case google::protobuf::FieldDescriptor::CppType::CPPTYPE_MESSAGE:
+            case CppType::CPPTYPE_MESSAGE:
                 push_proto_message_tolua(&refl->GetMessage(*msg, fd));
                 break;
             default: break;
