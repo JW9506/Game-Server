@@ -1,15 +1,11 @@
 #include "proto_man.h"
 #include <cstdio>
 #include <cstring>
-#include <google/protobuf/message.h>
-
-#define MAX_PF_MAP_SIZE 1024
 
 static int g_proto_type = PROTO_BUF;
-static char* g_pf_map[MAX_PF_MAP_SIZE];
-static int g_cmd_count = 0;
+static std::map<int, std::string> g_pb_cmd_map;
 
-static google::protobuf::Message* create_message(const char* typeName) {
+google::protobuf::Message* proto_man::create_message(const char* typeName) {
     google::protobuf::Message* message{};
     auto descriptor{ google::protobuf::DescriptorPool::generated_pool()
                          ->FindMessageTypeByName(typeName) };
@@ -21,20 +17,18 @@ static google::protobuf::Message* create_message(const char* typeName) {
     return message;
 }
 
-static void release_message(google::protobuf::Message* m) { delete m; }
+void proto_man::release_message(google::protobuf::Message* m) { delete m; }
 
 void proto_man::init(int proto_type) { g_proto_type = proto_type; }
 
 int proto_man::proto_type() { return g_proto_type; }
 
-void proto_man::register_pf_cmd_map(char** pf_map, int len) {
-    len = (MAX_PF_MAP_SIZE - g_cmd_count) < len
-              ? (MAX_PF_MAP_SIZE - g_cmd_count)
-              : len;
-    for (int i = 0; i < len; ++i) {
-        g_pf_map[g_cmd_count + i] = _strdup(pf_map[i]);
-    }
-    g_cmd_count += len;
+const char* proto_man::protobuf_cmd_name(int ctype) {
+    return g_pb_cmd_map[ctype].c_str();
+}
+
+void proto_man::register_pb_cmd_map(std::map<int, std::string>& map) {
+    g_pb_cmd_map = map;
 }
 
 // stype(2) | ctype(2) | utag(4) | body
@@ -62,11 +56,8 @@ bool proto_man::decode_cmd_msg(unsigned char* cmd, int cmd_len,
         json_str[json_len] = 0;
         msg->body = (void*)json_str;
     } else {
-        if (msg->ctype < 0 || msg->ctype >= MAX_PF_MAP_SIZE ||
-            g_pf_map[msg->ctype] == NULL) {
-            goto failed;
-        }
-        google::protobuf::Message* p_m = create_message(g_pf_map[msg->ctype]);
+        google::protobuf::Message* p_m =
+            create_message(g_pb_cmd_map[msg->ctype].c_str());
         if (p_m == NULL) { goto failed; }
         if (!p_m->ParseFromArray(cmd + CMD_HEADER, cmd_len - CMD_HEADER)) {
             release_message(p_m);

@@ -1,12 +1,11 @@
 #include "pf_cmd_map.h"
 #include "proto_man.h"
 
-char* pf_cmd_map[] = {
-    "LoginReq",
-    "LoginRes",
+std::map<int, std::string> pf_cmd_map{
+    { 0, "LoginReq" },
+    { 1, "LoginRes" },
 };
 
 void init_pf_cmd_map() {
-    proto_man::register_pf_cmd_map(pf_cmd_map,
-                                   sizeof(pf_cmd_map) / sizeof(char*));
+    proto_man::register_pb_cmd_map(pf_cmd_map);
 }
