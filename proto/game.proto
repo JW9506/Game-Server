@@ -1,8 +1,9 @@
 syntax = "proto3";
 
 enum Cmd {
-  eLoginReq = 0;
-  eLoginRes = 1;
+  INVALID_CMD = 0;
+  eLoginReq = 1;
+  eLoginRes = 2;
 }
 
 message LoginReq {
