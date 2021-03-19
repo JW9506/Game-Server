@@ -6,6 +6,7 @@
 #include "service_export_to_lua.h"
 #include "session_export_to_lua.h"
 #include <cstdio>
+#include <string>
 
 static lua_State* g_lua_State = NULL;
 
@@ -46,20 +47,72 @@ static int lua_panic(lua_State* L) {
     return 0;
 }
 
+static void get_string_for_print(lua_State* L, std::string* out) {
+    int n = lua_gettop(L);
+    int i;
+    lua_getglobal(L, "tostring");
+    for (i = 1; i <= n; i++) {
+        const char* s;
+        lua_pushvalue(L, -1);
+        lua_pushvalue(L, i);
+        lua_call(L, 1, 1);
+        size_t sz;
+        s = lua_tolstring(L, -1, &sz);
+        if (s == NULL) {
+            out->append(
+                LUA_QL("tostring") " must return a string to " LUA_QL("print"));
+        }
+        if (i > 1) { out->append("\t"); }
+        out->append(s, sz);
+        lua_pop(L, 1);
+    }
+}
+
 // int lua_CFunction(lua_State *L);
 static int lua_log_debug(lua_State* L) {
-    const char* msg = luaL_checkstring(L, -1);
-    if (msg) { do_log_message(print_debug, msg); }
+    std::string t;
+    get_string_for_print(L, &t);
+    do_log_message(print_debug, t.c_str());
     return 0;
 }
 static int lua_log_warning(lua_State* L) {
-    const char* msg = luaL_checkstring(L, -1);
-    if (msg) { do_log_message(print_warning, msg); }
+    std::string t;
+    get_string_for_print(L, &t);
+    do_log_message(print_warning, t.c_str());
     return 0;
 }
 static int lua_log_error(lua_State* L) {
-    const char* msg = luaL_checkstring(L, -1);
-    if (msg) { do_log_message(print_error, msg); }
+    std::string t;
+    get_string_for_print(L, &t);
+    do_log_message(print_error, t.c_str());
+    return 0;
+}
+
+static int lua_log_init(lua_State* L) {
+    const char* path = tolua_tostring(L, 1, 0);
+    if (!path) { goto lua_failed; }
+    const char* prefix = tolua_tostring(L, 2, 0);
+    if (!prefix) { goto lua_failed; }
+    bool std_output = tolua_toboolean(L, 3, 0);
+    logger::init(path, prefix, std_output);
+lua_failed:
+    return 0;
+}
+
+static int register_logger_export(lua_State* tolua_S) {
+    lua_wrapper::reg_func2lua("print", lua_log_debug);
+    lua_getglobal(tolua_S, "_G");
+    if (lua_istable(tolua_S, -1)) {
+        tolua_open(tolua_S);
+        tolua_module(tolua_S, "logger", 0);
+        tolua_beginmodule(tolua_S, "logger");
+        tolua_function(tolua_S, "debug", lua_log_debug);
+        tolua_function(tolua_S, "warning", lua_log_warning);
+        tolua_function(tolua_S, "error", lua_log_error);
+        tolua_function(tolua_S, "init", lua_log_init);
+        tolua_endmodule(tolua_S);
+    }
+    lua_pop(tolua_S, 1);
     return 0;
 }
 
@@ -69,13 +122,11 @@ void lua_wrapper::init() {
     luaL_openlibs(g_lua_State);
     toluafix_open(g_lua_State);
 
+    register_logger_export(g_lua_State);
     register_mysql_export(g_lua_State);
     register_redis_export(g_lua_State);
     register_service_export(g_lua_State);
     register_session_export(g_lua_State);
-    lua_wrapper::reg_func2lua("log_debug", lua_log_debug);
-    lua_wrapper::reg_func2lua("log_warning", lua_log_warning);
-    lua_wrapper::reg_func2lua("log_error", lua_log_error);
 }
 
 void lua_wrapper::exit() {

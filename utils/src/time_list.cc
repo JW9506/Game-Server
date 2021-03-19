@@ -45,14 +45,14 @@ void cancel_timer(struct timer* t) {
     free_timer(t);
 }
 
-struct timer* schedule(_timer_cb cb, void* udata, int after_msec,
-                       int repeat_count) {
+struct timer* schedule_repeat(_timer_cb cb, void* udata, int after_msec,
+                              int repeat_count, int repeat_msec) {
     struct timer* t = alloc_timer(cb, udata, repeat_count);
     t->uv_timer.data = t;
-    uv_timer_start(&t->uv_timer, on_uv_timer, after_msec, after_msec);
+    uv_timer_start(&t->uv_timer, on_uv_timer, after_msec, repeat_msec);
     return t;
 }
 
 struct timer* schedule_once(_timer_cb cb, void* udata, int after_msec) {
-    return schedule(cb, udata, after_msec, 1);
+    return schedule_repeat(cb, udata, after_msec, 1, after_msec);
 }
