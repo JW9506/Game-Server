@@ -158,7 +158,7 @@ struct udp_recv_buf {
 };
 static void udp_uv_alloc_cb(uv_handle_t* handle, size_t suggested_size,
                             uv_buf_t* buf) {
-    suggested_size = max(suggested_size, 8096);
+    suggested_size = suggested_size > 8096 ? suggested_size : 8096;
     struct udp_recv_buf* udp_buf = (struct udp_recv_buf*)handle->data;
     if (udp_buf->max_recv_len < suggested_size) {
         if (udp_buf->recv_buf) {
