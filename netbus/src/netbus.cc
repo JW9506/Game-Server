@@ -104,6 +104,13 @@ static void alloc_buf(uv_handle_t* handle, size_t suggested_size,
                     memcpy(s->long_pkg, s->recv_buf, s->recved);
                 } else {
                     // tcp > RECV_LEN
+                    int pkg_size;
+                    int head_size;
+                    tp_protocol::read_header((unsigned char*)s->recv_buf,
+                                             s->recved, &pkg_size, &head_size);
+                    s->long_pkg_size = pkg_size;
+                    s->long_pkg = (char*)malloc(pkg_size);
+                    memcpy(s->long_pkg, s->recv_buf, s->recved);
                 }
             }
         } else {
