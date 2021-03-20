@@ -12,6 +12,8 @@ public class network : MonoBehaviour
   public int port;
   private Socket client_socket = null;
   private bool is_connect = false;
+  private Thread recv_thread = null;
+  private byte[] recv_buffer = new byte[8192];
   void Awake()
   {
     DontDestroyOnLoad(this.gameObject);
@@ -19,6 +21,8 @@ public class network : MonoBehaviour
   void Start()
   {
     connect_to_server();
+    // unity
+    this.Invoke("close", 5.0f);
   }
   void Update() { }
   void connect_to_server()
@@ -46,11 +50,44 @@ public class network : MonoBehaviour
     {
       var client = (Socket)iar.AsyncState;
       client.EndConnect(iar);
-      Debug.Log("connect success");
+      is_connect = true;
+      recv_thread = new Thread(new ThreadStart(on_recv_data));
+      recv_thread.Start();
+      Debug.Log("Connected to " + server_ip + ":" + port);
     }
     catch (System.Exception e)
     {
       on_connect_error(e.ToString());
+      is_connect = false;
+    }
+  }
+  void on_recv_data() {
+    if (!this.is_connect)
+    {
+      return;
+    }
+    while (true) {
+      if (!client_socket.Connected)
+      {
+        break;
+      }
+      try
+      {
+        int revc_len = client_socket.Receive(this.recv_buffer);
+        if (revc_len > 0)
+        {
+
+        }
+      }
+      catch (System.Exception e)
+      {
+        Debug.Log(e.ToString());
+        client_socket.Disconnect(true);
+        client_socket.Shutdown(SocketShutdown.Both);
+        client_socket.Close();
+        is_connect = false;
+        break;
+      }
     }
   }
   void on_connect_timeout()
@@ -60,5 +97,19 @@ public class network : MonoBehaviour
   void on_connect_error(String info)
   {
     Debug.Log(info);
+  }
+  void close() {
+    if (!is_connect)
+    {
+      return;
+    }
+    if (recv_thread != null)
+    {
+      recv_thread.Abort();
+    }
+    if (client_socket != null && client_socket.Connected)
+    {
+      client_socket.Close();
+    }
   }
 }
