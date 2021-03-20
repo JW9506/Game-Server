@@ -175,30 +175,46 @@ static int lua_send_msg(lua_State* tolua_S) {
     session* s = (session*)tolua_touserdata(tolua_S, 1, 0);
     if (!s) { goto lua_failed; }
     if (!lua_istable(tolua_S, 2)) { goto lua_failed; }
-    lua_getfield(tolua_S, 2, "1");
-    lua_getfield(tolua_S, 2, "2");
-    lua_getfield(tolua_S, 2, "3");
-    lua_getfield(tolua_S, 2, "4");
+
     struct cmd_msg msg;
-    msg.stype = lua_tointeger(tolua_S, 3);
-    msg.ctype = lua_tointeger(tolua_S, 4);
-    msg.utag = lua_tointeger(tolua_S, 5);
+    int n = luaL_len(tolua_S, 2);
+    if (n != 4) { goto lua_failed; }
+
+    lua_pushnumber(tolua_S, 1);
+    lua_gettable(tolua_S, -2);
+    msg.stype = lua_tointeger(tolua_S, -1);
+    lua_pop(tolua_S, 1);
+
+    lua_pushnumber(tolua_S, 2);
+    lua_gettable(tolua_S, -2);
+    msg.ctype = lua_tointeger(tolua_S, -1);
+    lua_pop(tolua_S, 1);
+
+    lua_pushnumber(tolua_S, 3);
+    lua_gettable(tolua_S, -2);
+    msg.utag = lua_tointeger(tolua_S, -1);
+    lua_pop(tolua_S, 1);
+
+    lua_pushnumber(tolua_S, 4);
+    lua_gettable(tolua_S, -2);
     if (proto_man::proto_type() == PROTO_JSON) {
-        msg.body = (void*)lua_tostring(tolua_S, 6);
+        msg.body = (void*)lua_tostring(tolua_S, -1);
         s->send_msg(&msg);
     } else if (proto_man::proto_type() == PROTO_BUF) {
-        if (!lua_istable(tolua_S, 6)) {
+        if (!lua_istable(tolua_S, -1)) {
             msg.body = NULL;
             s->send_msg(&msg);
         } else {
             const char* msg_name = proto_man::protobuf_cmd_name(msg.ctype);
-            msg.body = (void*)lua_table_to_protobuf(tolua_S, 6, msg_name);
+            msg.body = (void*)lua_table_to_protobuf(
+                tolua_S, lua_gettop(tolua_S), msg_name);
             s->send_msg(&msg);
             proto_man::release_message((google::protobuf::Message*)msg.body);
         }
     } else {
         throw "not supported";
     }
+    lua_settop(tolua_S, 0);
 lua_failed:
     return 0;
 }

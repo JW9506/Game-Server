@@ -22,7 +22,7 @@ public class network : MonoBehaviour
   {
     connect_to_server();
     // unity
-    this.Invoke("test", 2.0f);
+    this.Invoke("test", 4.0f);
   }
   void test()
   {
@@ -87,7 +87,8 @@ public class network : MonoBehaviour
         int revc_len = client_socket.Receive(this.recv_buffer);
         if (revc_len > 0)
         {
-
+          Debug.Log("recv_len = " + revc_len);
+          Debug.Log(this.recv_buffer.ToString());
         }
       }
       catch (System.Exception e)

@@ -7,6 +7,14 @@ function echo_recv_cmd(s, msg)
   print(body.age)
   print(body.email)
   print(body.int_set)
+
+  local to_client = {
+    1,
+    2,
+    0,
+    {status = 200},
+  }
+  session.send_msg(s, to_client)
 end
 
 function echo_session_disconnect(s)
