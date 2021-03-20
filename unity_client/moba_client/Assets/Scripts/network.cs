@@ -61,12 +61,14 @@ public class network : MonoBehaviour
       is_connect = false;
     }
   }
-  void on_recv_data() {
+  void on_recv_data()
+  {
     if (!this.is_connect)
     {
       return;
     }
-    while (true) {
+    while (true)
+    {
       if (!client_socket.Connected)
       {
         break;
@@ -98,7 +100,8 @@ public class network : MonoBehaviour
   {
     Debug.Log(info);
   }
-  void close() {
+  void close()
+  {
     if (!is_connect)
     {
       return;
@@ -111,5 +114,13 @@ public class network : MonoBehaviour
     {
       client_socket.Close();
     }
+  }
+  void send_protobuf_cmd(int stype, int ctype, ProtoBuf.IExtensible body)
+  {
+    client_socket.Send(tcp_packer.pack(proto_man.pack_protobuf_cmd(stype, ctype, body)));
+  }
+  void send_json_cmd(int stype, int ctype, string json_body)
+  {
+
   }
 }
