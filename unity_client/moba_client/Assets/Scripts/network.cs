@@ -22,7 +22,16 @@ public class network : MonoBehaviour
   {
     connect_to_server();
     // unity
-    this.Invoke("close", 5.0f);
+    this.Invoke("test", 2.0f);
+  }
+  void test()
+  {
+    var req = new game.LoginReq();
+    req.name = "fook";
+    req.email = "q@q.com";
+    req.age = 99;
+    req.int_set = 8;
+    this.send_protobuf_cmd(1, 1, req);
   }
   void Update() { }
   void connect_to_server()

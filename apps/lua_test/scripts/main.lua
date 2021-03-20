@@ -19,4 +19,7 @@ netbus.tcp_server(6081)
 netbus.ws_server(8001)
 netbus.udp_server(8002)
 
-print("Lua starting up!")
+print("Lua started up!")
+
+local echo_server = require("echo_server")
+service.register(echo_server.stype, echo_server.service)
