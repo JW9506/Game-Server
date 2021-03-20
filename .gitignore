@@ -4,6 +4,7 @@
 _bin
 proto/*.cc
 proto/*.h
+proto/*.cs
 !proto/*map.h
 !proto/*map.cc
 logger
