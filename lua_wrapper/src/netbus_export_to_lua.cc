@@ -4,14 +4,14 @@
 #include "netbus.h"
 
 static int lua_netbus_init(lua_State* tolua_S) {
-    netbus::instance()->init();
+    netbus::instance();
     return 0;
 }
 static int lua_netbus_tcp(lua_State* tolua_S) {
     int argc = lua_gettop(tolua_S);
     if (argc != 1) { goto lua_failed; }
     int port = lua_tointeger(tolua_S, 1);
-    netbus::instance()->udp_server(port);
+    netbus::instance()->tcp_server(port);
 lua_failed:
     return 0;
 }
@@ -19,7 +19,7 @@ static int lua_netbus_udp(lua_State* tolua_S) {
     int argc = lua_gettop(tolua_S);
     if (argc != 1) { goto lua_failed; }
     int port = lua_tointeger(tolua_S, 1);
-    netbus::instance()->tcp_server(port);
+    netbus::instance()->udp_server(port);
 lua_failed:
     return 0;
 }
