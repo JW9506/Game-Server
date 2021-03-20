@@ -7,6 +7,13 @@ local proto_type = {
 }
 proto_man.init(proto_type.PROTO_BUF)
 
+if proto_man.proto_type() == proto_type.PROTO_BUF then
+  local cmd_name_map = require("cmd_name_map")
+  if cmd_name_map then
+    proto_man.register_protobuf_cmd_map(cmd_name_map)
+  end
+end
+
 netbus.tcp_server(6080)
 netbus.tcp_server(6081)
 netbus.ws_server(8001)

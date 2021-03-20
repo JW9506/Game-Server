@@ -1,3 +1,3 @@
 #!/bin/bash
 
-./../../build/bin/lua_test
+./../../build/bin/lua_test $@
