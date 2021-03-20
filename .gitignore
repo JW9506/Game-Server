@@ -7,3 +7,4 @@ proto/*.h
 !proto/*map.h
 !proto/*map.cc
 logger
+unity_client/**/Temp
