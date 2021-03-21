@@ -21,5 +21,10 @@ netbus.udp_server(8002)
 
 print("Lua started up!")
 
-local echo_server = require("echo_server")
-service.register(echo_server.stype, echo_server.service)
+local chat_room = require("chat_room")
+local ret = service.register(chat_room.stype, chat_room.service)
+if ret then
+  print("registered chat room service")
+else
+  print("failed to registered chat room service")
+end
