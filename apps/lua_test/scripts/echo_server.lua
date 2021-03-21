@@ -7,7 +7,6 @@ function echo_recv_cmd(s, msg)
   print(body.age)
   print(body.email)
   print(body.int_set)
-
   local to_client = {
     1,
     2,

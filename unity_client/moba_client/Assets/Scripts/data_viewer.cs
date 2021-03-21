@@ -24,4 +24,9 @@ public class data_viewer
   {
     Array.Copy(value, 0, dst, offset, value.Length);
   }
+  public static ushort read_ushort_le(byte[] data, int offset)
+  {
+
+    return (ushort)(data[offset] | (data[offset + 1] << 8));
+  }
 }

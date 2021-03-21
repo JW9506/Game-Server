@@ -4,6 +4,11 @@ using System.Text;
 using ProtoBuf;
 using UnityEngine;
 
+public class cmd_msg {
+  public int stype;
+  public int ctype;
+  public byte[] body;
+}
 public class proto_man
 {
   private const int HEADER_SIZE = 8;
@@ -52,5 +57,26 @@ public class proto_man
       data_viewer.write_bytes(cmd, HEADER_SIZE, cmd_body);
     }
     return cmd;
+  }
+  public static bool unpack_cmd_msg(
+    byte[] data,
+    int offset,
+    int data_len,
+    out cmd_msg msg)
+  {
+    msg = new cmd_msg();
+    msg.stype = data_viewer.read_ushort_le(data, offset);
+    msg.ctype = data_viewer.read_ushort_le(data, offset + 2);
+    int body_len = data_len - HEADER_SIZE;
+    msg.body = new byte[body_len];
+    Array.Copy(data, offset + HEADER_SIZE, msg.body, 0, body_len);
+    return true;
+  }
+  public static T protobuf_deserialize<T>(byte[] _data)
+  {
+    using (MemoryStream m = new MemoryStream(_data))
+    {
+      return Serializer.Deserialize<T>(m);
+    }
   }
 }

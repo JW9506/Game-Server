@@ -4,6 +4,9 @@
 #include "pf_cmd_map.h"
 #include "logger.h"
 #include "lua_wrapper.h"
+#ifdef _DEBUG
+#include "mdump.h"
+#endif
 
 int main(int argc, char** argv) {
     lua_wrapper::init();

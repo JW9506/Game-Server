@@ -13,7 +13,11 @@ public class network : MonoBehaviour
   private Socket client_socket = null;
   private bool is_connect = false;
   private Thread recv_thread = null;
-  private byte[] recv_buffer = new byte[8192];
+  private const int RECV_LEN = 8192;
+  private byte[] recv_buf = new byte[RECV_LEN];
+  private int recved = 0;
+  private byte[] long_pkg = null;
+  private int long_pkg_size = 0;
   void Awake()
   {
     DontDestroyOnLoad(this.gameObject);
@@ -38,10 +42,15 @@ public class network : MonoBehaviour
   {
     try
     {
-      client_socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+      client_socket = new Socket(AddressFamily.InterNetwork,
+                                 SocketType.Stream,
+                                 ProtocolType.Tcp);
       var ipAddress = IPAddress.Parse(this.server_ip);
       var ipEndPoint = new IPEndPoint(ipAddress, this.port);
-      var result = client_socket.BeginConnect(ipEndPoint, new AsyncCallback(on_connect_success), client_socket);
+      var result = client_socket.BeginConnect(
+        ipEndPoint,
+        new AsyncCallback(on_connect_success),
+        client_socket);
       var timeout = result.AsyncWaitHandle.WaitOne(4000, true);
       if (!timeout)
       {
@@ -60,7 +69,7 @@ public class network : MonoBehaviour
       var client = (Socket)iar.AsyncState;
       client.EndConnect(iar);
       is_connect = true;
-      recv_thread = new Thread(new ThreadStart(on_recv_data));
+      recv_thread = new Thread(new ThreadStart(recv_worker_thread));
       recv_thread.Start();
       Debug.Log("Connected to " + server_ip + ":" + port);
     }
@@ -70,7 +79,7 @@ public class network : MonoBehaviour
       is_connect = false;
     }
   }
-  void on_recv_data()
+  void recv_worker_thread()
   {
     if (!this.is_connect)
     {
@@ -84,11 +93,36 @@ public class network : MonoBehaviour
       }
       try
       {
-        int revc_len = client_socket.Receive(this.recv_buffer);
-        if (revc_len > 0)
+        int recv_len = 0;
+        if (recved < RECV_LEN)
         {
-          Debug.Log("recv_len = " + revc_len);
-          Debug.Log(this.recv_buffer.ToString());
+          recv_len = client_socket.Receive(
+            recv_buf,
+            recved,
+            RECV_LEN - recved,
+            SocketFlags.None);
+        }
+        else
+        {
+          if (long_pkg == null)
+          {
+            int pkg_size;
+            int head_size;
+            tcp_packer.read_header(recv_buf, recved, out pkg_size, out head_size);
+            long_pkg_size = pkg_size;
+            long_pkg = new byte[pkg_size];
+            Array.Copy(recv_buf, 0, long_pkg, 0, recved);
+          }
+          recv_len = client_socket.Receive(
+            long_pkg,
+            recved,
+            long_pkg_size - recved,
+            SocketFlags.None);
+        }
+        if (recv_len > 0)
+        {
+          recved += recv_len;
+          on_recv_tcp_data();
         }
       }
       catch (System.Exception e)
@@ -100,6 +134,46 @@ public class network : MonoBehaviour
         is_connect = false;
         break;
       }
+    }
+  }
+  void on_recv_tcp_data()
+  {
+    byte[] pkg_data = long_pkg != null ? long_pkg : recv_buf;
+    while (recved > 0)
+    {
+      int pkg_size;
+      int head_size;
+      if (!tcp_packer.read_header(pkg_data, recved, out pkg_size, out head_size))
+      {
+        break;
+      }
+      if (recved < pkg_size)
+      {
+        break;
+      }
+      on_recv_client_cmd(pkg_data, head_size, pkg_size - head_size);
+      if (recved > pkg_size)
+      {
+        recv_buf = new byte[RECV_LEN];
+        Array.Copy(pkg_data, pkg_size, recv_buf, 0, recved - pkg_size);
+        pkg_data = recv_buf;
+      }
+      recved -= pkg_size;
+      if (recved == 0 && long_pkg != null)
+      {
+        long_pkg = null;
+        long_pkg_size = 0;
+      }
+    }
+  }
+  void on_recv_client_cmd(byte[] data, int offset, int data_len)
+  {
+    cmd_msg msg;
+    proto_man.unpack_cmd_msg(data, offset, data_len, out msg);
+    if (msg != null)
+    {
+      game.LoginRes res = proto_man.protobuf_deserialize<game.LoginRes>(msg.body);
+      Debug.Log(res.status + " status");
     }
   }
   void on_connect_timeout()
