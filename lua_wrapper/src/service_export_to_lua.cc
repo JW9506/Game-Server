@@ -224,6 +224,7 @@ class lua_service : service {
         lua_rawseti(lua_wrapper::lua_state(), -2, index++);
         if (!msg->body) {
             lua_pushnil(lua_wrapper::lua_state());
+            lua_rawseti(lua_wrapper::lua_state(), -2, index++);
         } else {
             if (proto_man::proto_type() == PROTO_JSON) {
                 lua_pushstring(lua_wrapper::lua_state(), (char*)msg->body);

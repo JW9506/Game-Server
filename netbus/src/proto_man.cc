@@ -93,23 +93,30 @@ unsigned char* proto_man::encode_msg_to_raw(const struct cmd_msg* msg,
     int raw_len = 0;
     *out_len = 0;
     unsigned char* raw_data = NULL;
-    if (g_proto_type == PROTO_JSON) {
-        char* json_str = (char*)msg->body;
-        int json_str_len = (int)strlen(json_str);
-        int len = CMD_HEADER + json_str_len + 1;
-        raw_data = (unsigned char*)malloc(len);
-        memcpy(raw_data + CMD_HEADER, json_str, json_str_len - CMD_HEADER - 1);
-        raw_data[len] = 0;
-        *out_len = len;
-    } else { // protobuf
-        google::protobuf::Message* p_m = (google::protobuf::Message*)msg->body;
-        int pf_len = p_m->ByteSize();
-        raw_data = (unsigned char*)malloc(CMD_HEADER + pf_len);
-        if (!p_m->SerializePartialToArray(raw_data + CMD_HEADER, pf_len)) {
-            free(raw_data);
-            return NULL;
+    if (msg->body) {
+        if (g_proto_type == PROTO_JSON) {
+            char* json_str = (char*)msg->body;
+            int json_str_len = (int)strlen(json_str);
+            int len = CMD_HEADER + json_str_len + 1;
+            raw_data = (unsigned char*)malloc(len);
+            memcpy(raw_data + CMD_HEADER, json_str,
+                   json_str_len - CMD_HEADER - 1);
+            raw_data[len] = 0;
+            *out_len = len;
+        } else { // protobuf
+            google::protobuf::Message* p_m =
+                (google::protobuf::Message*)msg->body;
+            int pf_len = p_m->ByteSize();
+            raw_data = (unsigned char*)malloc(CMD_HEADER + pf_len);
+            if (!p_m->SerializePartialToArray(raw_data + CMD_HEADER, pf_len)) {
+                free(raw_data);
+                return NULL;
+            }
+            *out_len = pf_len + CMD_HEADER;
         }
-        *out_len = pf_len + CMD_HEADER;
+    } else {
+        raw_data = (unsigned char*)malloc(CMD_HEADER);
+        *out_len = CMD_HEADER;
     }
     raw_data[0] = msg->stype & 0xff;
     raw_data[1] = (msg->stype & 0xff00) >> 8;
