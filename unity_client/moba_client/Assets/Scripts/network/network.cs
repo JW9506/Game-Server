@@ -10,6 +10,16 @@ public class network : MonoBehaviour
 {
   public string server_ip;
   public int port;
+  public delegate void net_message_handle(cmd_msg cmd);
+  public static network instance
+  {
+    get
+    {
+      return _instance;
+    }
+  }
+
+  private static network _instance;
   private Socket client_socket = null;
   private bool is_connect = false;
   private Thread recv_thread = null;
@@ -18,14 +28,8 @@ public class network : MonoBehaviour
   private int recved = 0;
   private byte[] long_pkg = null;
   private int long_pkg_size = 0;
-  public static network _instance;
-  public static network instance
-  {
-    get
-    {
-      return _instance;
-    }
-  }
+  private Queue<cmd_msg> net_events = new Queue<cmd_msg>();
+  private Dictionary<int, net_message_handle> event_listeners = new Dictionary<int, net_message_handle>();
   void Awake()
   {
     _instance = this;
@@ -37,10 +41,12 @@ public class network : MonoBehaviour
     // unity
     this.Invoke("test", 4.0f);
   }
-  void OnDestroy() {
+  void OnDestroy()
+  {
     this.close();
   }
-  void OnApplicationQuit() {
+  void OnApplicationQuit()
+  {
     this.close();
   }
   void test()
@@ -52,7 +58,20 @@ public class network : MonoBehaviour
     req.int_set = 8;
     this.send_protobuf_cmd(1, 1, req);
   }
-  void Update() { }
+  void Update()
+  {
+    lock (net_events)
+    {
+      while (net_events.Count > 0)
+      {
+        cmd_msg msg = net_events.Dequeue();
+        if (event_listeners.ContainsKey(msg.stype))
+        {
+          event_listeners[msg.stype](msg);
+        }
+      }
+    }
+  }
   void connect_to_server()
   {
     try
@@ -140,7 +159,7 @@ public class network : MonoBehaviour
           on_recv_tcp_data();
         }
       }
-      catch (System.Exception e)
+      catch (System.Exception)
       {
         if (client_socket != null && client_socket.Connected)
         {
@@ -189,8 +208,10 @@ public class network : MonoBehaviour
     proto_man.unpack_cmd_msg(data, offset, data_len, out msg);
     if (msg != null)
     {
-      game.LoginRes res = proto_man.protobuf_deserialize<game.LoginRes>(msg.body);
-      Debug.Log(res.status + " status");
+      lock (net_events)
+      {
+        net_events.Enqueue(msg);
+      }
     }
   }
   void on_connect_timeout()
@@ -217,12 +238,74 @@ public class network : MonoBehaviour
     }
     is_connect = true;
   }
-  void send_protobuf_cmd(int stype, int ctype, ProtoBuf.IExtensible body)
+  private void on_send_data(IAsyncResult iar)
   {
-    client_socket.Send(tcp_packer.pack(proto_man.pack_protobuf_cmd(stype, ctype, body)));
+    try
+    {
+      Socket client = (Socket)iar.AsyncState;
+      client.EndSend(iar);
+    }
+    catch (System.Exception e)
+    {
+      Debug.Log(e.ToString());
+    }
   }
-  void send_json_cmd(int stype, int ctype, string json_body)
+  public void send_protobuf_cmd(int stype, int ctype, ProtoBuf.IExtensible body)
   {
-
+    byte[] cmd_data = proto_man.pack_protobuf_cmd(stype, ctype, body);
+    if (cmd_data == null)
+    {
+      return;
+    }
+    byte[] tcp_pkg = tcp_packer.pack(cmd_data);
+    client_socket.BeginSend(
+      tcp_pkg,
+      0,
+      tcp_pkg.Length,
+      SocketFlags.None,
+      new AsyncCallback(on_send_data),
+      client_socket);
+  }
+  public void send_json_cmd(int stype, int ctype, string json_body)
+  {
+    byte[] cmd_data = proto_man.pack_json_cmd(stype, ctype, json_body);
+    if (cmd_data == null)
+    {
+      return;
+    }
+    byte[] tcp_pkg = tcp_packer.pack(cmd_data);
+    client_socket.BeginSend(
+      tcp_pkg,
+      0,
+      tcp_pkg.Length,
+      SocketFlags.None,
+      new AsyncCallback(on_send_data),
+      client_socket);
+  }
+  public void add_service_listener(int stype, net_message_handle handle)
+  {
+    if (event_listeners.ContainsKey(stype))
+    {
+      event_listeners[stype] += handle;
+    }
+    else
+    {
+      event_listeners.Add(stype, handle);
+    }
+  }
+  public void remove_service_listener(int stype, net_message_handle handle)
+  {
+    if (!event_listeners.ContainsKey(stype))
+    {
+      return;
+    }
+    else
+    {
+      event_listeners[stype] -= handle;
+      if (event_listeners[stype] == null)
+      {
+        event_listeners.Remove(stype);
+      }
+    }
   }
 }
