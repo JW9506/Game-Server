@@ -18,8 +18,17 @@ public class network : MonoBehaviour
   private int recved = 0;
   private byte[] long_pkg = null;
   private int long_pkg_size = 0;
+  public static network _instance;
+  public static network instance
+  {
+    get
+    {
+      return _instance;
+    }
+  }
   void Awake()
   {
+    _instance = this;
     DontDestroyOnLoad(this.gameObject);
   }
   void Start()
@@ -27,6 +36,12 @@ public class network : MonoBehaviour
     connect_to_server();
     // unity
     this.Invoke("test", 4.0f);
+  }
+  void OnDestroy() {
+    this.close();
+  }
+  void OnApplicationQuit() {
+    this.close();
   }
   void test()
   {
@@ -127,10 +142,12 @@ public class network : MonoBehaviour
       }
       catch (System.Exception e)
       {
-        Debug.Log(e.ToString());
-        client_socket.Disconnect(true);
-        client_socket.Shutdown(SocketShutdown.Both);
-        client_socket.Close();
+        if (client_socket != null && client_socket.Connected)
+        {
+          client_socket.Disconnect(true);
+          client_socket.Shutdown(SocketShutdown.Both);
+          client_socket.Close();
+        }
         is_connect = false;
         break;
       }
@@ -198,6 +215,7 @@ public class network : MonoBehaviour
     {
       client_socket.Close();
     }
+    is_connect = true;
   }
   void send_protobuf_cmd(int stype, int ctype, ProtoBuf.IExtensible body)
   {

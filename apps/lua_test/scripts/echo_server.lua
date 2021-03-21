@@ -17,6 +17,8 @@ function echo_recv_cmd(s, msg)
 end
 
 function echo_session_disconnect(s)
+  local ip, port = session.get_address(s)
+  print(">>> "..ip..":"..port.." disconnected")
 end
 
 local echo_service = {
