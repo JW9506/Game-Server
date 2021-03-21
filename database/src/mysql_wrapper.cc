@@ -39,14 +39,13 @@ static void connect_work(uv_work_t* req) {
         _new(struct mysql_context, c);
         c->pConn = pConn;
         uv_mutex_init(&c->lock);
+        mysql_query(pConn, "set names utf8");
         r->context = (void*)c;
         r->err = NULL;
     } else {
         r->context = NULL;
         r->err = _strdup(mysql_error(pConn));
     }
-    int ret = mysql_query(pConn, "set names utf8");
-    if (ret != 0) { printf("%s\n", mysql_error(pConn)); }
 }
 
 static void on_connect_work_complete(uv_work_t* req, int status) {
