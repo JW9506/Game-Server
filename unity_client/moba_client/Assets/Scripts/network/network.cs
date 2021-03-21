@@ -38,8 +38,6 @@ public class network : MonoBehaviour
   void Start()
   {
     connect_to_server();
-    // unity
-    this.Invoke("test", 4.0f);
   }
   void OnDestroy()
   {
@@ -48,15 +46,6 @@ public class network : MonoBehaviour
   void OnApplicationQuit()
   {
     this.close();
-  }
-  void test()
-  {
-    var req = new game.LoginReq();
-    req.name = "fook";
-    req.email = "q@q.com";
-    req.age = 99;
-    req.int_set = 8;
-    this.send_protobuf_cmd(1, 1, req);
   }
   void Update()
   {
