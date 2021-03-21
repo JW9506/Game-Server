@@ -92,26 +92,23 @@ static void alloc_buf(uv_handle_t* handle, size_t suggested_size,
         *buf = uv_buf_init(s->recv_buf + s->recved, RECV_LEN - s->recved);
     } else {
         if (s->long_pkg == NULL) {
-            if (s->socket_type == WS_SOCKET) {
-                if (s->socket_type == WS_SOCKET && s->did_shake_hand) {
-                    int pkg_size;
-                    int head_size;
-                    ws_protocol::read_ws_header((unsigned char*)s->recv_buf,
-                                                s->recved, &pkg_size,
-                                                &head_size);
-                    s->long_pkg_size = pkg_size;
-                    s->long_pkg = (char*)malloc(pkg_size);
-                    memcpy(s->long_pkg, s->recv_buf, s->recved);
-                } else {
-                    // tcp > RECV_LEN
-                    int pkg_size;
-                    int head_size;
-                    tp_protocol::read_header((unsigned char*)s->recv_buf,
-                                             s->recved, &pkg_size, &head_size);
-                    s->long_pkg_size = pkg_size;
-                    s->long_pkg = (char*)malloc(pkg_size);
-                    memcpy(s->long_pkg, s->recv_buf, s->recved);
-                }
+            if (s->socket_type == WS_SOCKET && s->did_shake_hand) {
+                int pkg_size;
+                int head_size;
+                ws_protocol::read_ws_header((unsigned char*)s->recv_buf,
+                                            s->recved, &pkg_size, &head_size);
+                s->long_pkg_size = pkg_size;
+                s->long_pkg = (char*)malloc(pkg_size);
+                memcpy(s->long_pkg, s->recv_buf, s->recved);
+            } else {
+                // tcp > RECV_LEN
+                int pkg_size;
+                int head_size;
+                tp_protocol::read_header((unsigned char*)s->recv_buf, s->recved,
+                                         &pkg_size, &head_size);
+                s->long_pkg_size = pkg_size;
+                s->long_pkg = (char*)malloc(pkg_size);
+                memcpy(s->long_pkg, s->recv_buf, s->recved);
             }
         } else {
             *buf = uv_buf_init(s->long_pkg + s->recved,
