@@ -7,7 +7,8 @@ extern struct cache_allocer* wbuf_allocator;
 bool tp_protocol::read_header(const unsigned char* data, int data_len,
                               int* pkg_size, int* out_header_size) {
     if (data_len < 2) { return false; }
-    *pkg_size = data[0] | (data[1] << 8);
+    *pkg_size = 2;
+    *pkg_size += data[0] | (data[1] << 8);
     *out_header_size = 2;
     return true;
 }

@@ -35,7 +35,7 @@ static void on_recv_tcp_data(uv_session* s) {
         if (s->recved < pkg_size) { break; }
         unsigned char* raw_data = pkg_data + head_size;
 
-        on_recv_client_cmd((session*)s, raw_data, pkg_size);
+        on_recv_client_cmd((session*)s, raw_data, pkg_size - head_size);
         if (s->recved > pkg_size) {
             // remove handled pkg (by moving it to the lower mem space)
             memmove(pkg_data, pkg_data + pkg_size, s->recved - pkg_size);
