@@ -1,16 +1,20 @@
 #include "udp_session.h"
 #include "proto_man.h"
+#include "small_alloc.h"
+
+#define _malloc small_alloc
+#define _free   small_free
 
 void udp_session::close() { }
 
 static void udp_send_cb(uv_udp_send_t* req, int status) {
     if (status == 0) { printf("udp send success\n"); }
-    free(req);
+    _free(req);
 }
 
 void udp_session::send_data(char* body, int len) {
     uv_buf_t w_buf = uv_buf_init(body, len);
-    uv_udp_send_t* req = (uv_udp_send_t*)malloc(sizeof(uv_udp_send_t));
+    uv_udp_send_t* req = (uv_udp_send_t*)_malloc(sizeof(uv_udp_send_t));
     uv_udp_send(req, &this->udp_handle, &w_buf, 1, this->addr, udp_send_cb);
 }
 

@@ -1,8 +1,12 @@
 #include "mysql_wrapper.h"
 #include <uv.h>
 #include <mysql.h>
+#include "small_alloc.h"
 
-#define _new(type, var) type* var = (type*)calloc(1, sizeof(type))
+#define _new(type, var)                                                        \
+    type* var = (type*)small_alloc(sizeof(type));                              \
+    memset(var, 0, sizeof(type))
+#define _free(mem) small_free(mem)
 
 struct connect_req {
     char* ip;
@@ -51,13 +55,13 @@ static void connect_work(uv_work_t* req) {
 static void on_connect_work_complete(uv_work_t* req, int status) {
     struct connect_req* r = (struct connect_req*)req->data;
     r->open_cb(r->err, r->context, r->udata);
-    if (r->ip) { free(r->ip); }
-    if (r->db_name) { free(r->db_name); }
-    if (r->uname) { free(r->uname); }
-    if (r->upwd) { free(r->upwd); }
-    if (r->err) { free(r->err); }
-    free(r);
-    free(req);
+    if (r->ip) { _free(r->ip); }
+    if (r->db_name) { _free(r->db_name); }
+    if (r->uname) { _free(r->uname); }
+    if (r->upwd) { _free(r->upwd); }
+    if (r->err) { _free(r->err); }
+    _free(r);
+    _free(req);
 }
 
 static void close_work(uv_work_t* req) {
@@ -67,10 +71,10 @@ static void close_work(uv_work_t* req) {
     mysql_close(c->pConn);
     uv_mutex_unlock(&c->lock);
     uv_mutex_destroy(&c->lock);
-    free(c);
+    _free(c);
 }
 
-static void on_close_complete(uv_work_t* req, int status) { free(req); }
+static void on_close_complete(uv_work_t* req, int status) { _free(req); }
 
 static void query_work(uv_work_t* req) {
     struct query_req* r = (struct query_req*)req->data;
@@ -100,10 +104,10 @@ static void on_query_complete(uv_work_t* req, int status) {
         mysql_free_result(r->result);
         r->result = NULL;
     }
-    if (r->err) { free(r->err); }
-    if (r->sql) { free(r->sql); }
-    free(r);
-    free(req);
+    if (r->err) { _free(r->err); }
+    if (r->sql) { _free(r->sql); }
+    _free(r);
+    _free(req);
 }
 
 void mysql_wrapper::connect(const char* ip, int port, const char* db_name,

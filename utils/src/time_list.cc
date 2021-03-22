@@ -1,11 +1,14 @@
 #include "time_list.h"
 #include <stdlib.h>
 #include <uv.h>
+#include "small_alloc.h"
 
 typedef void (*_timer_cb)(void*);
 
-#define _new(type, var) type* var = (type*)calloc(1, sizeof(type))
-#define _free           free
+#define _new(type, var)                                                        \
+    type* var = (type*)small_alloc(sizeof(type));                              \
+    memset(var, 0, sizeof(type))
+#define _free(mem) small_free(mem)
 
 static struct timer* alloc_timer(_timer_cb cb, void* udata, int repeat_count) {
     _new(struct timer, t);

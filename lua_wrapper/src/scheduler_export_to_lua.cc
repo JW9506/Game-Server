@@ -4,8 +4,13 @@
 #include "lua_wrapper.h"
 #include "time_list.h"
 #include <cstdlib>
+#include "small_alloc.h"
 
-#define _new(type, var) type* var = (type*)calloc(1, sizeof(type))
+#define _new(type, var)                                                        \
+    type* var = (type*)small_alloc(sizeof(type));                              \
+    memset(var, 0, sizeof(type))
+#define _free(mem) small_free(mem)
+
 struct timer_repeat {
     unsigned int handle;
     int repeat_count;
@@ -18,7 +23,7 @@ static void __on_lua_timer(void* udata) {
     --tr->repeat_count;
     if (tr->repeat_count <= 0) {
         lua_wrapper::remove_script_handle(tr->handle);
-        free(tr);
+        _free(tr);
     }
 }
 
@@ -76,7 +81,7 @@ static int lua_scheduler_cancel(lua_State* tolua_S) {
     struct timer* t = (struct timer*)lua_touserdata(tolua_S, 1);
     struct timer_repeat* tr = (struct timer_repeat*)get_timer_udata(t);
     lua_wrapper::remove_script_handle(tr->handle);
-    free(tr);
+    _free(tr);
     cancel_timer(t);
 lua_failed:
     return 0;
