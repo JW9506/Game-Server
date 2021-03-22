@@ -10,7 +10,7 @@ enum { TCP_SOCKET, WS_SOCKET };
 
 void init_session_allocer();
 
-class uv_session : session {
+class uv_session : public session {
   public:
     uv_tcp_t tcp_handle;
     char c_address[32];

@@ -265,3 +265,50 @@ void netbus::init() {
     service_man::init();
     init_session_allocer();
 }
+
+struct connect_cb {
+    void (*on_connected)(int err, session* s, void* udata);
+    void* udata;
+};
+void after_connect(uv_connect_t* req, int status) {
+    uv_session* s = (uv_session*)req->handle->data;
+    struct connect_cb* cb = (struct connect_cb*)req->data;
+    if (status) {
+        if (cb->on_connected) { cb->on_connected(1, NULL, cb->udata); }
+        s->close();
+        free(cb);
+        free(req);
+        return;
+    }
+    if (cb->on_connected) { cb->on_connected(0, (session*)s, cb->udata); }
+    uv_read_start((uv_stream_t*)req->handle, alloc_buf, after_read);
+    free(cb);
+    free(req);
+}
+
+void netbus::tcp_connect(const char* server_ip, int port,
+                         void (*on_connected)(int err, session* s, void* udata),
+                         void* udata) {
+    struct sockaddr_in bind_addr;
+    if (uv_ip4_addr(server_ip, port, &bind_addr)) { return; }
+
+    uv_session* s = uv_session::create();
+    uv_tcp_t* client = &s->tcp_handle;
+    uv_tcp_init(uv_default_loop(), client);
+    client->data = (void*)s;
+    s->as_client = 1;
+
+    s->socket_type = TCP_SOCKET;
+    strcpy(s->c_address, server_ip);
+    s->c_port = port;
+    uv_connect_t* connect_req = (uv_connect_t*)malloc(sizeof(uv_connect_t));
+    struct connect_cb* cb =
+        (struct connect_cb*)malloc(sizeof(struct connect_cb));
+    cb->on_connected = on_connected;
+    cb->udata = udata;
+    connect_req->data = (void*)cb;
+    if (uv_tcp_connect(connect_req, client, (struct sockaddr*)&bind_addr,
+                       after_connect)) {
+        return;
+    }
+}
