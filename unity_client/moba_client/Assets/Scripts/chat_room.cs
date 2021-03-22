@@ -9,16 +9,89 @@ public class chat_room : MonoBehaviour
   public GameObject status_prefab;
   public GameObject chat_prefab;
   public GameObject self_prefab;
-  void Start()
+  public InputField input;
+  private string sent_msg = null;
+
+  void on_login_resp(byte[] body)
   {
-    add_status_option("Joined Room.");
-    this.InvokeRepeating("test", 2.0f, 2.0f);
+    var res = proto_man.protobuf_deserialize<game.LoginRes>(body);
+    if (res.status == 1)
+    {
+      add_status_option("Join room successful");
+    }
+    else if (res.status == -1)
+    {
+      add_status_option("You are already in the room");
+    }
+  }
+  void on_exit_resp(byte[] body)
+  {
+    var res = proto_man.protobuf_deserialize<game.ExitRes>(body);
+    if (res.status == 1)
+    {
+      add_status_option("Exit room successful");
+    }
+    else if (res.status == -1)
+    {
+      add_status_option("You are not in the room");
+    }
+  }
+  void on_send_resp(byte[] body)
+  {
+    var res = proto_man.protobuf_deserialize<game.SendMsgRes>(body);
+    if (res.status == 1)
+    {
+      add_self_option(sent_msg);
+    }
+    else if (res.status == -1)
+    {
+      add_self_option("Send message unsuccessful");
+    }
+  }
+  void on_user_login(byte[] body)
+  {
+    var res = proto_man.protobuf_deserialize<game.OnUserLogin>(body);
+    add_status_option(res.ip + ":" + res.port + " has joined the room");
   }
 
-  void test()
+  void on_user_exit(byte[] body)
   {
-    add_talk_option("127.0.0.1", 6080, "foobar");
-    add_self_option("Hello");
+    var res = proto_man.protobuf_deserialize<game.OnUserExit>(body);
+    add_status_option(res.ip + ":" + res.port + " has left the room");
+  }
+
+  void on_user_msg(byte[] body)
+  {
+    var res = proto_man.protobuf_deserialize<game.OnSendMsg>(body);
+    add_talk_option(res.ip, res.port, res.content);
+  }
+  void on_chat_room_server_resp(cmd_msg msg)
+  {
+    switch (msg.ctype)
+    {
+      case (int)game.Cmd.eLoginRes:
+        on_login_resp(msg.body);
+        break;
+      case (int)game.Cmd.eExitRes:
+        on_exit_resp(msg.body);
+        break;
+      case (int)game.Cmd.eSendMsgRes:
+        on_send_resp(msg.body);
+        break;
+      case (int)game.Cmd.eOnUserLogin:
+        on_user_login(msg.body);
+        break;
+      case (int)game.Cmd.eOnUserExit:
+        on_user_exit(msg.body);
+        break;
+      case (int)game.Cmd.eOnSendMsg:
+        on_user_msg(msg.body);
+        break;
+    }
+  }
+  void Start()
+  {
+    network.instance.add_service_listener(2, on_chat_room_server_resp);
   }
 
   void add_status_option(string status_info)
@@ -67,14 +140,21 @@ public class chat_room : MonoBehaviour
   }
   public void on_enter_chat_room()
   {
-    Debug.Log("on_enter_chat_room");
+    network.instance.send_protobuf_cmd(2, (int)game.Cmd.eLoginReq, null);
   }
   public void on_exit_chat_room()
   {
-    Debug.Log("on_exit_chat_room");
+    network.instance.send_protobuf_cmd(2, (int)game.Cmd.eExitReq, null);
   }
   public void on_send_msg()
   {
-    Debug.Log("on_send_msg");
+    if (input.text.Length <= 0)
+    {
+      return;
+    }
+    var req = new game.SendMsgReq();
+    req.content = input.text;
+    sent_msg = input.text;
+    network.instance.send_protobuf_cmd(2, (int)game.Cmd.eSendMsgReq, req);
   }
 }
