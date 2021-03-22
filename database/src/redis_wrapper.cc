@@ -8,6 +8,16 @@
     memset(var, 0, sizeof(type))
 #define _free(mem) small_free(mem)
 
+static char* __strdup(const char* src) {
+    int len = strlen(src) + 1;
+    char* dst = (char*)small_alloc(len);
+    strcpy(dst, src);
+    dst[len] = 0;
+    return dst;
+}
+
+static void __free_strdup(char* str) { small_free(str); }
+
 struct connect_req {
     char* ip;
     int port;
@@ -37,7 +47,7 @@ static void connect_work(uv_work_t* req) {
     struct timeval timeout = { 5, 0 };
     redisContext* redis_conn = redisConnectWithTimeout(r->ip, r->port, timeout);
     if (redis_conn->err) {
-        r->err = _strdup(redis_conn->errstr);
+        r->err = __strdup(redis_conn->errstr);
         r->context = NULL;
         redisFree(redis_conn);
     } else {
@@ -51,8 +61,8 @@ static void connect_work(uv_work_t* req) {
 static void on_connect_work_complete(uv_work_t* req, int status) {
     struct connect_req* r = (struct connect_req*)req->data;
     r->open_cb(r->err, r->context, r->udata);
-    if (r->ip) { _free(r->ip); }
-    if (r->err) { _free(r->err); }
+    if (r->ip) { __free_strdup(r->ip); }
+    if (r->err) { __free_strdup(r->err); }
     _free(r);
     _free(req);
 }
@@ -83,7 +93,7 @@ static void query_work(uv_work_t* req) {
     r->err = NULL;
     redisReply* reply = (redisReply*)redisCommand(conn, r->cmd);
     if (reply->type == REDIS_REPLY_ERROR) {
-        r->err = _strdup(reply->str);
+        r->err = __strdup(reply->str);
         freeReplyObject(reply);
     } else {
         r->result = reply;
@@ -97,8 +107,8 @@ static void on_query_complete(uv_work_t* req, int status) {
         r->query_cb(r->err, r->result, r->udata);
     }
     if (r->result) { freeReplyObject(r->result); }
-    if (r->err) { _free(r->err); }
-    if (r->cmd) { _free(r->cmd); }
+    if (r->err) { __free_strdup(r->err); }
+    if (r->cmd) { __free_strdup(r->cmd); }
     _free(r);
     _free(req);
 }
@@ -109,7 +119,7 @@ void redis_wrapper::connect(const char* ip, int port,
                             void* udata) {
     _new(uv_work_t, w);
     _new(struct connect_req, r);
-    r->ip = _strdup(ip);
+    r->ip = __strdup(ip);
     r->port = port;
     r->open_cb = open_cb;
     r->udata = udata;
@@ -130,7 +140,7 @@ void redis_wrapper::query(void* context, const char* cmd,
     _new(uv_work_t, w);
     _new(struct query_req, r);
     r->context = context;
-    r->cmd = _strdup(cmd);
+    r->cmd = __strdup(cmd);
     r->query_cb = query_cb;
     r->udata = udata;
     w->data = (void*)r;
