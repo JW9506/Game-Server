@@ -1,7 +1,6 @@
 /build
 !toluapp/build
 .vscode
-_bin
 proto/*.cc
 proto/*.h
 proto/*.cs
